@@ -1,0 +1,12 @@
+services:
+  mongodb:
+    container_name: db
+    image: mongo:latest
+    restart: always
+    ports:
+    - ${MONGO_PORT}:${MONGO_PORT}
+    volumes:
+      - mongodb-data:/data/db
+      - ../db/MongoDB/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+volumes:
+  mongodb-data:
