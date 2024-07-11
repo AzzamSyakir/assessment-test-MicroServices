@@ -1,7 +1,7 @@
 package main
 
 import (
-	"assessment-test-MicroService/src/account-employee-service/container"
+	"assesement-test-MicroServices/src/account-employee-service/container"
 	"fmt"
 	"log"
 	"net"
@@ -15,7 +15,7 @@ func main() {
 	address := fmt.Sprintf(
 		"%s:%s",
 		"0.0.0.0",
-		webContainer.Env.App.Port,
+		webContainer.Env,
 	)
 	netListen, err := net.Listen("tcp", address)
 	if err != nil {

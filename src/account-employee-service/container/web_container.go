@@ -1,10 +1,10 @@
 package container
 
 import (
-	"assessment-test-MicroService/grpc/pb"
-	"assessment-test-MicroService/src/user-service/config"
-	"assessment-test-MicroService/src/user-service/repository"
-	"assessment-test-MicroService/src/user-service/use_case"
+	"assesement-test-MicroServices/grpc/pb"
+	"assesement-test-MicroServices/src/account-employee-service/config"
+	"assesement-test-MicroServices/src/account-employee-service/repository"
+	"assesement-test-MicroServices/src/account-employee-service/use_case"
 	"fmt"
 
 	"github.com/joho/godotenv"

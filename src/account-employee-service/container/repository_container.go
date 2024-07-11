@@ -1,7 +1,7 @@
 package container
 
 import (
-	"assessment-test-MicroService/src/user-service/repository"
+	"assesement-test-MicroServices/src/account-employee-service/repository"
 )
 
 type RepositoryContainer struct {

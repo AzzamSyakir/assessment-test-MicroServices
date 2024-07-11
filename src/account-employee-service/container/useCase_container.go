@@ -1,7 +1,7 @@
 package container
 
 import (
-	"assessment-test-MicroService/src/user-service/use_case"
+	"assesement-test-MicroServices/src/account-employee-service/use_case"
 )
 
 type UseCaseContainer struct {
