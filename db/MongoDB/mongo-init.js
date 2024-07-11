@@ -1,15 +1,15 @@
 var dbUser = process.env.MONGO_USER;
 var dbPassword = process.env.MONGO_PASSWORD;
-db = db.getSiblingDB("db")
+db = db.getSiblingDB("appDb")
 
 
 db.createUser({
-    user: 'user',
-    pwd: 'password',
+    user: dbUser,
+    pwd: dbPassword,
     roles: [
       {
         role: 'dbOwner',
-      db: 'db',
+      db: 'appDb',
     },
   ],
 }); 

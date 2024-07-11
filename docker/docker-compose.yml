@@ -7,6 +7,6 @@ services:
     - ${MONGO_PORT}:${MONGO_PORT}
     volumes:
       - mongodb-data:/data/db
-      - ../db/MongoDB/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+      - ./mongodb/initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro      
 volumes:
   mongodb-data:
