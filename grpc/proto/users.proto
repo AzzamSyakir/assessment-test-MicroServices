@@ -3,39 +3,42 @@ package  assesement_test_MicroServices;
 
 import "google/protobuf/timestamp.proto";
 import "commons.proto";
-
 option go_package = "pb/";
 
 
-service CategoryService{
-  rpc GetCategoryById(ById) returns (CategoryResponse);
-  rpc UpdateCategory(UpdateCategoryRequest) returns (CategoryResponse);
-  rpc CreateCategory(CreateCategoryRequest) returns (CategoryResponse);
-  rpc DeleteCategory(ById) returns (CategoryResponse);
-  rpc ListCategorys(empty) returns (CategoryResponseRepeated);
+service UserService{
+  rpc GetUserById(ById) returns (UserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
+  rpc CreateUser(CreateUserRequest) returns (UserResponse);
+  rpc DeleteUser(ById) returns (UserResponse);
+  rpc ListUsers(empty) returns (UserResponseRepeated);
 }
 
-message Category {
+message User {
   string id = 1;
-  string name = 2;
+  string username = 2;
+  string address = 3;
+  string postcode = 4;
+  string province = 5;
+  string city = 6;
   google.protobuf.Timestamp created_at = 7;
   google.protobuf.Timestamp updated_at = 8;
 }
 
-message CategoryResponse{
+message UserResponse{
   int64 code=1;
   string message=2;
-  Category data=3;
+  User data=3;
 }
-message CategoryResponseRepeated{
+message UserResponseRepeated{
   int64 code=1;
   string message=2;
-  repeated Category data=3;
+  repeated User data=3;
 }
-message UpdateCategoryRequest{
+message UpdateUserRequest{
   string id=1;
   optional string name=2;
 }
-message CreateCategoryRequest{
+message CreateUserRequest{
   string name=1;
 }

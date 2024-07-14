@@ -1,0 +1,41 @@
+syntax = "proto3";
+package  assesement_test_MicroServices;
+
+import "google/protobuf/timestamp.proto";
+import "commons.proto";
+option go_package = "pb/";
+
+
+service OfficeService{
+  rpc GetOfficeById(ById) returns (OfficeResponse);
+  rpc UpdateOffice(UpdateOfficeRequest) returns (OfficeResponse);
+  rpc CreateOffice(CreateOfficeRequest) returns (OfficeResponse);
+  rpc DeleteOffice(ById) returns (OfficeResponse);
+  rpc ListOffices(empty) returns (OfficeResponseRepeated);
+}
+
+message Office {
+  string id = 1;
+  string branchcode = 2;
+  string branchname = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message OfficeResponse{
+  int64 code=1;
+  string message=2;
+  Office data=3;
+}
+message OfficeResponseRepeated{
+  int64 code=1;
+  string message=2;
+  repeated Office data=3;
+}
+message UpdateOfficeRequest{
+  string id=1;
+  optional string name=2;
+}
+message CreateOfficeRequest{
+  string name=1;
+}
