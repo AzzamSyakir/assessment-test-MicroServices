@@ -7,3 +7,6 @@ stop-docker:
 
 clean-docker:
 	clear && docker system prune && docker volume prune && docker image prune -a -f && docker container prune
+
+generate-proto:
+	clear && protoc --proto_path=grpc/proto grpc/proto/*.proto --go_out=grpc --go-grpc_out=grpc
