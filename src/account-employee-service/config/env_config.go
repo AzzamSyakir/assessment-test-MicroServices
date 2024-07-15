@@ -9,7 +9,7 @@ type AppEnv struct {
 	Port string
 }
 
-type PostgresEnv struct {
+type MongoEnv struct {
 	Host     string
 	Port     string
 	Account  string
@@ -19,7 +19,7 @@ type PostgresEnv struct {
 
 type EnvConfig struct {
 	App       *AppEnv
-	AccountDB *PostgresEnv
+	AccountDB *MongoEnv
 }
 
 func NewEnvConfig() *EnvConfig {
@@ -28,7 +28,7 @@ func NewEnvConfig() *EnvConfig {
 			Host: os.Getenv("GATEWAY_APP_HOST"),
 			Port: os.Getenv("Account_SERVICES_PORT"),
 		},
-		AccountDB: &PostgresEnv{
+		AccountDB: &MongoEnv{
 			Host:     os.Getenv("MONGO_HOST"),
 			Port:     os.Getenv("MONGO_PORT"),
 			Account:  os.Getenv("MONGO_USER"),

@@ -16,14 +16,14 @@ type mongoDB struct {
 	Connection *mongo.Client
 }
 
-func NewAccountDBConfig(envConfig *EnvConfig) *DatabaseConfig {
+func NewDBConfig(envConfig *EnvConfig) *DatabaseConfig {
 	databaseConfig := &DatabaseConfig{
-		AccountDB: NewAccountDB(envConfig),
+		AccountDB: NewDB(envConfig),
 	}
 	return databaseConfig
 }
 
-func NewAccountDB(envConfig *EnvConfig) *mongoDB {
+func NewDB(envConfig *EnvConfig) *mongoDB {
 	var uri string
 	if envConfig.AccountDB.Password == "" {
 		uri = fmt.Sprintf(

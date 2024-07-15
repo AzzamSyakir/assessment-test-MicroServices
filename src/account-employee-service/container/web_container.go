@@ -26,7 +26,7 @@ func NewWebContainer() *WebContainer {
 	}
 
 	envConfig := config.NewEnvConfig()
-	AccountDBConfig := config.NewAccountDBConfig(envConfig)
+	AccountDBConfig := config.NewDBConfig(envConfig)
 
 	AccountRepository := repository.NewAccountRepository()
 	repositoryContainer := NewRepositoryContainer(AccountRepository)
