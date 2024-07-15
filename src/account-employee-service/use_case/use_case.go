@@ -1,9 +1,9 @@
 package use_case
 
 import (
-	"assessment-test-MicroService/grpc/pb"
-	"assessment-test-MicroService/src/account-employee-service/config"
-	"assessment-test-MicroService/src/account-employee-service/repository"
+	"assesement-test-MicroServices/grpc/pb"
+	"assesement-test-MicroServices/src/account-employee-service/config"
+	"assesement-test-MicroServices/src/account-employee-service/repository"
 	"context"
 	"fmt"
 	"time"
@@ -15,189 +15,141 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type UserUseCase struct {
-	pb.UnimplementedUserServiceServer
-	DatabaseConfig *config.DatabaseConfig
-	UserRepository *repository.UserRepository
+type AccountUseCase struct {
+	pb.UnimplementedAccountServiceServer
+	DatabaseConfig    *config.DatabaseConfig
+	AccountRepository *repository.AccountRepository
 }
 
-func NewUserUseCase(
+func NewAccountUseCase(
 	databaseConfig *config.DatabaseConfig,
-	userRepository *repository.UserRepository,
-) *UserUseCase {
-	return &UserUseCase{
-		UnimplementedUserServiceServer: pb.UnimplementedUserServiceServer{},
-		DatabaseConfig:                 databaseConfig,
-		UserRepository:                 userRepository,
+	AccountRepository *repository.AccountRepository,
+) *AccountUseCase {
+	return &AccountUseCase{
+		UnimplementedAccountServiceServer: pb.UnimplementedAccountServiceServer{},
+		DatabaseConfig:                    databaseConfig,
+		AccountRepository:                 AccountRepository,
 	}
 }
 
-func (userUseCase *UserUseCase) GetUserById(context context.Context, id *pb.ById) (result *pb.UserResponse, err error) {
-	begin, err := userUseCase.DatabaseConfig.UserDB.Connection.Begin()
+func (AccountUseCase *AccountUseCase) GetAccountById(context context.Context, id *pb.ById) (result *pb.AccountResponse, err error) {
+	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
 	if err != nil {
-		rollback := begin.Rollback()
-		result = &pb.UserResponse{
+		rollback := session.AbortTransaction(context)
+		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "UserUseCase GetUserById is failed, begin fail, " + err.Error(),
+			Message: "AccountUseCase GetAccountById is failed, Session fail, " + err.Error(),
 			Data:    nil,
 		}
 		return result, rollback
 	}
-	GetUserById, GetUserByIdErr := userUseCase.UserRepository.GetUserById(begin, id.Id)
-	if GetUserByIdErr != nil {
-		rollback := begin.Rollback()
-		errorMessage := fmt.Sprintf("UserUseCase GetUserById is failed, GetUserById failed : %s", GetUserByIdErr)
-		result = &pb.UserResponse{
+	GetAccountById, GetAccountByIdErr := AccountUseCase.AccountRepository.GetAccountById(AccountUseCase.DatabaseConfig.AccountDB.Connection, id.Id)
+	if GetAccountByIdErr != nil {
+		rollback := session.AbortTransaction(context)
+		errorMessage := fmt.Sprintf("AccountUseCase GetAccountById is failed, GetAccountById failed : %s", GetAccountByIdErr)
+		result = &pb.AccountResponse{
 			Code:    int64(codes.Canceled),
 			Message: errorMessage,
 			Data:    nil,
 		}
 		return result, rollback
 	}
-	if GetUserById == nil {
-		rollback := begin.Rollback()
-		errorMessage := fmt.Sprintf("User UseCase GetOneById is failed, User is not found by id %s", id)
-		result = &pb.UserResponse{
+	if GetAccountById == nil {
+		rollback := session.AbortTransaction(context)
+		errorMessage := fmt.Sprintf("Account UseCase GetOneById is failed, Account is not found by id %s", id)
+		result = &pb.AccountResponse{
 			Code:    int64(codes.Canceled),
 			Message: errorMessage,
 			Data:    nil,
 		}
 		return result, rollback
 	}
-	commit := begin.Commit()
-	result = &pb.UserResponse{
+	commit := session.CommitTransaction(context)
+	result = &pb.AccountResponse{
 		Code:    int64(codes.OK),
-		Message: "User UseCase GetOneById is succeed.",
-		Data:    GetUserById,
+		Message: "Account UseCase GetOneById is succeed.",
+		Data:    GetAccountById,
 	}
 	return result, commit
 }
-func (userUseCase *UserUseCase) GetUserByEmail(context context.Context, email *pb.ByEmail) (result *pb.UserResponse, err error) {
-	begin, err := userUseCase.DatabaseConfig.UserDB.Connection.Begin()
+
+func (AccountUseCase *AccountUseCase) UpdateAccount(context context.Context, request *pb.UpdateAccountRequest) (result *pb.AccountResponse, err error) {
+	begin := AccountUseCase.DatabaseConfig.AccountDB.Connection
+	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
 	if err != nil {
-		rollback := begin.Rollback()
-		result = &pb.UserResponse{
+		rollback := session.AbortTransaction(context)
+		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "UserUseCase GetUserByEmail is failed, begin fail, " + err.Error(),
-			Data:    nil,
-		}
-		return result, rollback
-	}
-	GetUserByEmail, GetUserByEmailErr := userUseCase.UserRepository.GetUserByEmail(begin, email.Email)
-	if GetUserByEmailErr != nil {
-		rollback := begin.Rollback()
-		errorMessage := fmt.Sprintf("UserUseCase GetUserByEmail is failed, GetUserById failed : %s", GetUserByEmailErr)
-		result = &pb.UserResponse{
-			Code:    int64(codes.Canceled),
-			Message: errorMessage,
-			Data:    nil,
-		}
-		return result, rollback
-	}
-	if GetUserByEmail == nil {
-		rollback := begin.Rollback()
-		errorMessage := fmt.Sprintf("User UseCase FindOneByemail is failed, User is not found by email %s", email)
-		result = &pb.UserResponse{
-			Code:    int64(codes.Canceled),
-			Message: errorMessage,
-			Data:    nil,
-		}
-		return result, rollback
-	}
-	commit := begin.Commit()
-	result = &pb.UserResponse{
-		Code:    int64(codes.OK),
-		Message: "User UseCase GetOneById is succeed.",
-		Data:    GetUserByEmail,
-	}
-	return result, commit
-}
-func (userUseCase *UserUseCase) UpdateUser(context context.Context, request *pb.UpdateUserRequest) (result *pb.UserResponse, err error) {
-	begin, err := userUseCase.DatabaseConfig.UserDB.Connection.Begin()
-	if err != nil {
-		rollback := begin.Rollback()
-		result = &pb.UserResponse{
-			Code:    int64(codes.Internal),
-			Message: "UserUseCase UpdateUser is failed, begin fail, " + err.Error(),
+			Message: "AccountUseCase UpdateAccount is failed, session fail, " + err.Error(),
 			Data:    nil,
 		}
 		return result, rollback
 	}
 
-	foundUser, err := userUseCase.UserRepository.GetUserById(begin, request.Id)
+	foundAccount, err := AccountUseCase.AccountRepository.GetAccountById(begin, request.Id)
 	if err != nil {
-		rollback := begin.Rollback()
-		result = &pb.UserResponse{
+		rollback := session.AbortTransaction(context)
+		result = &pb.AccountResponse{
 			Code:    int64(codes.Canceled),
-			Message: "UserUseCase UpdateUser is failed, query to db fail, " + err.Error(),
+			Message: "AccountUseCase UpdateAccount is failed, query to db fail, " + err.Error(),
 			Data:    nil,
 		}
 		return result, rollback
 	}
-	if foundUser == nil {
-		rollback := begin.Rollback()
-		result = &pb.UserResponse{
+	if foundAccount == nil {
+		rollback := session.AbortTransaction(context)
+		result = &pb.AccountResponse{
 			Code:    int64(codes.Canceled),
-			Message: "UserUserCase UpdateUser is failed, User is not found by id " + request.Id,
+			Message: "AccountAccountCase UpdateAccount is failed, Account is not found by id " + request.Id,
 			Data:    nil,
 		}
 		return result, rollback
 	}
 	if request.Name != nil {
-		foundUser.Name = *request.Name
-	}
-	if request.Email != nil {
-		foundUser.Email = *request.Email
-	}
-	if request.Balance != nil {
-		foundUser.Balance = *request.Balance
+		foundAccount.Accountname = *request.Name
 	}
 	if request.Password != nil {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(*request.Password), bcrypt.DefaultCost)
 		if err != nil {
-			rollback := begin.Rollback()
-			result = &pb.UserResponse{
+			rollback := session.AbortTransaction(context)
+			result = &pb.AccountResponse{
 				Code:    int64(codes.Canceled),
-				Message: "UserUseCase UpdateUser is failed, password hashing is failed, " + err.Error(),
+				Message: "AccountUseCase UpdateAccount is failed, password hashing is failed, " + err.Error(),
 				Data:    nil,
 			}
 			return result, rollback
 		}
 
-		foundUser.Password = string(hashedPassword)
-	}
-	if request.Balance != nil {
-		foundUser.Balance = *request.Balance
+		foundAccount.Password = string(hashedPassword)
 	}
 	time := time.Now()
-	foundUser.UpdatedAt = timestamppb.New(time)
-	patchedUser, err := userUseCase.UserRepository.PatchOneById(begin, request.Id, foundUser)
+	foundAccount.UpdatedAt = timestamppb.New(time)
+	patchedAccount, err := AccountUseCase.AccountRepository.PatchOneById(begin, request.Id, foundAccount)
 	if err != nil {
-		rollback := begin.Rollback()
-		result = &pb.UserResponse{
+		rollback := session.AbortTransaction(context)
+		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "UserUseCase UpdateUser is failed, query to db fail, " + err.Error(),
+			Message: "AccountUseCase UpdateAccount is failed, query to db fail, " + err.Error(),
 			Data:    nil,
 		}
 		return result, rollback
 	}
 
-	commit := begin.Commit()
-	result = &pb.UserResponse{
+	commit := session.CommitTransaction(context)
+	result = &pb.AccountResponse{
 		Code:    int64(codes.OK),
-		Message: "UserUserCase UpdateUser is succeed.",
-		Data:    patchedUser,
+		Message: "AccountAccountCase UpdateAccount is succeed.",
+		Data:    patchedAccount,
 	}
 	return result, commit
 }
-func (userUseCase *UserUseCase) CreateUser(context context.Context, request *pb.CreateUserRequest) (result *pb.UserResponse, err error) {
-
-	begin, err := userUseCase.DatabaseConfig.UserDB.Connection.Begin()
+func (AccountUseCase *AccountUseCase) CreateAccount(context context.Context, request *pb.CreateAccountRequest) (result *pb.AccountResponse, err error) {
+	begin, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
 	if err != nil {
-		rollback := begin.Rollback()
-		result = &pb.UserResponse{
+		rollback := begin.AbortTransaction(context)
+		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "UserUseCase Register is failed, begin fail," + err.Error(),
+			Message: "AccountUseCase Register is failed, begin fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, rollback
@@ -205,85 +157,83 @@ func (userUseCase *UserUseCase) CreateUser(context context.Context, request *pb.
 
 	hashedPassword, hashedPasswordErr := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	if hashedPasswordErr != nil {
-		err = begin.Rollback()
-		result = &pb.UserResponse{
+		err = begin.AbortTransaction(context)
+		result = &pb.AccountResponse{
 			Code:    int64(codes.Canceled),
-			Message: "UserUseCase Register is failed, password hashing is failed.",
+			Message: "AccountUseCase Register is failed, password hashing is failed.",
 			Data:    nil,
 		}
 		return result, err
 	}
 
 	currentTime := null.NewTime(time.Now(), true)
-	newUser := &pb.User{
-		Id:        uuid.NewString(),
-		Name:      request.Name,
-		Email:     request.Email,
-		Password:  string(hashedPassword),
-		Balance:   request.Balance,
-		CreatedAt: timestamppb.New(currentTime.Time),
-		UpdatedAt: timestamppb.New(currentTime.Time),
+	newAccount := &pb.Account{
+		Id:          uuid.NewString(),
+		Accountname: request.Name,
+		Password:    string(hashedPassword),
+		CreatedAt:   timestamppb.New(currentTime.Time),
+		UpdatedAt:   timestamppb.New(currentTime.Time),
 	}
 
-	createdUser, err := userUseCase.UserRepository.CreateUser(begin, newUser)
+	createdAccount, err := AccountUseCase.AccountRepository.CreateAccount(begin, newAccount)
 	if err != nil {
-		rollback := begin.Rollback()
-		result = &pb.UserResponse{
+		rollback := begin.AbortTransaction(context)
+		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "UserUseCase Register is failed, query to db fail, " + err.Error(),
+			Message: "AccountUseCase Register is failed, query to db fail, " + err.Error(),
 			Data:    nil,
 		}
 		return result, rollback
 	}
 
-	commit := begin.Commit()
-	result = &pb.UserResponse{
+	commit := begin.CommitTransaction(context)
+	result = &pb.AccountResponse{
 		Code:    int64(codes.OK),
-		Message: "UserUseCase Register is succeed.",
-		Data:    createdUser,
+		Message: "AccountUseCase Register is succeed.",
+		Data:    createdAccount,
 	}
 	return result, commit
 }
-func (userUseCase *UserUseCase) DeleteUser(context context.Context, id *pb.ById) (result *pb.UserResponse, err error) {
-	begin, err := userUseCase.DatabaseConfig.UserDB.Connection.Begin()
+func (AccountUseCase *AccountUseCase) DeleteAccount(context context.Context, id *pb.ById) (result *pb.AccountResponse, err error) {
+	begin, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
 	if err != nil {
 		return result, err
 	}
 
-	deletedUser, deletedUserErr := userUseCase.UserRepository.DeleteUser(begin, id.Id)
-	if deletedUserErr != nil {
-		err = begin.Rollback()
-		result = &pb.UserResponse{
+	deletedAccount, deletedAccountErr := AccountUseCase.AccountRepository.DeleteAccount(begin, id.Id)
+	if deletedAccountErr != nil {
+		err = begin.AbortTransaction(context)
+		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "UserUserCase DeleteUser is failed, " + deletedUserErr.Error(),
+			Message: "AccountAccountCase DeleteAccount is failed, " + deletedAccountErr.Error(),
 			Data:    nil,
 		}
 		return result, err
 	}
-	if deletedUser == nil {
-		err = begin.Rollback()
-		result = &pb.UserResponse{
+	if deletedAccount == nil {
+		err = begin.AbortTransaction(context)
+		result = &pb.AccountResponse{
 			Code:    int64(codes.Canceled),
-			Message: "UserUserCase DeleteUser is failed, user is not deleted by id, " + id.Id,
+			Message: "AccountAccountCase DeleteAccount is failed, Account is not deleted by id, " + id.Id,
 			Data:    nil,
 		}
 		return result, err
 	}
 
-	err = begin.Commit()
-	result = &pb.UserResponse{
+	err = begin.CommitTransaction(context)
+	result = &pb.AccountResponse{
 		Code:    int64(codes.OK),
-		Message: "UserUserCase DeleteUser is succeed.",
-		Data:    deletedUser,
+		Message: "AccountAccountCase DeleteAccount is succeed.",
+		Data:    deletedAccount,
 	}
 	return result, err
 }
-func (userUseCase *UserUseCase) ListUsers(ctx context.Context, empty *pb.Empty) (result *pb.UserResponseRepeated, err error) {
-	begin, err := userUseCase.DatabaseConfig.UserDB.Connection.Begin()
+func (AccountUseCase *AccountUseCase) ListAccounts(context context.Context, empty *pb.Empty) (result *pb.AccountResponseRepeated, err error) {
+	begin, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
 	if err != nil {
-		rollback := begin.Rollback()
+		rollback := begin.AbortTransaction(context)
 		errorMessage := fmt.Sprintf("begin failed :%s", err)
-		result = &pb.UserResponseRepeated{
+		result = &pb.AccountResponseRepeated{
 			Code:    int64(codes.Internal),
 			Message: errorMessage,
 			Data:    nil,
@@ -291,11 +241,11 @@ func (userUseCase *UserUseCase) ListUsers(ctx context.Context, empty *pb.Empty) 
 		return result, rollback
 	}
 
-	ListUser, err := userUseCase.UserRepository.ListUser(begin)
+	ListAccount, err := AccountUseCase.AccountRepository.ListAccount(begin)
 	if err != nil {
-		rollback := begin.Rollback()
-		errorMessage := fmt.Sprintf("UserUseCase ListUser is failed, query failed : %s", err)
-		result = &pb.UserResponseRepeated{
+		rollback := begin.AbortTransaction(context)
+		errorMessage := fmt.Sprintf("AccountUseCase ListAccount is failed, query failed : %s", err)
+		result = &pb.AccountResponseRepeated{
 			Code:    int64(codes.Internal),
 			Message: errorMessage,
 			Data:    nil,
@@ -303,20 +253,20 @@ func (userUseCase *UserUseCase) ListUsers(ctx context.Context, empty *pb.Empty) 
 		return result, rollback
 	}
 
-	if ListUser.Data == nil {
-		rollback := begin.Rollback()
-		result = &pb.UserResponseRepeated{
+	if ListAccount.Data == nil {
+		rollback := begin.AbortTransaction(context)
+		result = &pb.AccountResponseRepeated{
 			Code:    int64(codes.Canceled),
-			Message: "User UseCase ListUser is failed, data User is empty ",
+			Message: "Account UseCase ListAccount is failed, data Account is empty ",
 			Data:    nil,
 		}
 		return result, rollback
 	}
-	commit := begin.Commit()
-	result = &pb.UserResponseRepeated{
+	commit := begin.CommitTransaction(context)
+	result = &pb.AccountResponseRepeated{
 		Code:    int64(codes.OK),
-		Message: "User UseCase ListUser is succeed.",
-		Data:    ListUser.Data,
+		Message: "Account UseCase ListAccount is succeed.",
+		Data:    ListAccount.Data,
 	}
 	return result, commit
 }

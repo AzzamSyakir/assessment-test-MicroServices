@@ -1,54 +1,54 @@
 package repository
 
 import (
-	"assessment-test-MicroService/grpc/pb"
+	"assesement-test-MicroServices/grpc/pb"
+	"context"
 	"database/sql"
 
 	"github.com/guregu/null"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type UserRepository struct {
+type AccountRepository struct {
 }
 
-func NewUserRepository() *UserRepository {
-	userRepository := &UserRepository{}
-	return userRepository
+func NewAccountRepository() *AccountRepository {
+	AccountRepository := &AccountRepository{}
+	return AccountRepository
 }
-func DeserializeUserRows(rows *sql.Rows) []*pb.User {
-	var foundUsers []*pb.User
+func DeserializeAccountRows(rows *sql.Rows) []*pb.Account {
+	var foundAccounts []*pb.Account
 	for rows.Next() {
-		foundUser := &pb.User{}
+		foundAccount := &pb.Account{}
 		var createdAt, updatedAt null.Time
 		scanErr := rows.Scan(
-			&foundUser.Id,
-			&foundUser.Name,
-			&foundUser.Email,
-			&foundUser.Password,
-			&foundUser.Balance,
+			&foundAccount.Id,
+			&foundAccount.Accountname,
+			&foundAccount.Password,
 			&createdAt,
 			&updatedAt,
 		)
-		foundUser.CreatedAt = timestamppb.New(createdAt.Time)
-		foundUser.UpdatedAt = timestamppb.New(updatedAt.Time)
+		foundAccount.CreatedAt = timestamppb.New(createdAt.Time)
+		foundAccount.UpdatedAt = timestamppb.New(updatedAt.Time)
 		if scanErr != nil {
 			panic(scanErr)
 		}
-		foundUsers = append(foundUsers, foundUser)
+		foundAccounts = append(foundAccounts, foundAccount)
 	}
-	return foundUsers
+	return foundAccounts
 }
 
-func (userRepository *UserRepository) CreateUser(begin *sql.Tx, toCreateUser *pb.User) (result *pb.User, err error) {
+func (AccountRepository *AccountRepository) CreateAccount(begin *sql.Tx, toCreateAccount *pb.Account) (result *pb.Account, err error) {
 	_, queryErr := begin.Query(
-		`INSERT INTO "users" (id, name, email, password, balance, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7);`,
-		toCreateUser.Id,
-		toCreateUser.Name,
-		toCreateUser.Email,
-		toCreateUser.Password,
-		toCreateUser.Balance,
-		toCreateUser.CreatedAt.AsTime(),
-		toCreateUser.UpdatedAt.AsTime(),
+		`INSERT INTO "Accounts" (id, name, email, password, balance, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7);`,
+		toCreateAccount.Id,
+		toCreateAccount.Accountname,
+		toCreateAccount.Password,
+		toCreateAccount.CreatedAt.AsTime(),
+		toCreateAccount.UpdatedAt.AsTime(),
 	)
 	if queryErr != nil {
 		result = nil
@@ -56,16 +56,16 @@ func (userRepository *UserRepository) CreateUser(begin *sql.Tx, toCreateUser *pb
 		return
 	}
 
-	result = toCreateUser
+	result = toCreateAccount
 	err = nil
 	return result, err
 }
 
-func (userRepository *UserRepository) ListUser(begin *sql.Tx) (result *pb.UserResponseRepeated, err error) {
+func (AccountRepository *AccountRepository) ListAccount(begin *sql.Tx) (result *pb.AccountResponseRepeated, err error) {
 	var rows *sql.Rows
 	var queryErr error
 	rows, queryErr = begin.Query(
-		`SELECT id, name, email, password, balance, created_at, updated_at FROM "users" `,
+		`SELECT id, name, email, password, balance, created_at, updated_at FROM "Accounts" `,
 	)
 
 	if queryErr != nil {
@@ -74,118 +74,84 @@ func (userRepository *UserRepository) ListUser(begin *sql.Tx) (result *pb.UserRe
 		return result, err
 	}
 	defer rows.Close()
-	var ListUsers []*pb.User
+	var ListAccounts []*pb.Account
 	var createdAt, updatedAt null.Time
 	for rows.Next() {
-		ListUser := &pb.User{}
+		ListAccount := &pb.Account{}
 		scanErr := rows.Scan(
-			&ListUser.Id,
-			&ListUser.Name,
-			&ListUser.Email,
-			&ListUser.Password,
-			&ListUser.Balance,
+			&ListAccount.Id,
+			&ListAccount.Accountname,
+			&ListAccount.Password,
 			&createdAt,
 			&updatedAt,
 		)
-		ListUser.CreatedAt = timestamppb.New(createdAt.Time)
-		ListUser.UpdatedAt = timestamppb.New(updatedAt.Time)
+		ListAccount.CreatedAt = timestamppb.New(createdAt.Time)
+		ListAccount.UpdatedAt = timestamppb.New(updatedAt.Time)
 		if scanErr != nil {
 			result = nil
 			err = scanErr
 			return result, err
 		}
-		ListUsers = append(ListUsers, ListUser)
+		ListAccounts = append(ListAccounts, ListAccount)
 	}
 
-	result = &pb.UserResponseRepeated{
-		Data: ListUsers,
+	result = &pb.AccountResponseRepeated{
+		Data: ListAccounts,
 	}
 	err = nil
 	return result, err
 }
 
-func (userRepository *UserRepository) GetUserById(begin *sql.Tx, id string) (result *pb.User, err error) {
+func (AccountRepository *AccountRepository) GetAccountById(begin *mongo.Client, id string) (result *pb.Account, err error) {
 	var rows *sql.Rows
 	var queryErr error
-	rows, queryErr = begin.Query(
-		`SELECT id, name, email, password, balance, created_at, updated_at FROM "users" WHERE id=$1 LIMIT 1;`,
-		id,
-	)
+	db := begin.Database("db")
+
+	queryErr = db.Collection("accounts").FindOne(context.Background(), bson.D{{Key: "id", Value: id}}).Decode(&rows)
 
 	if queryErr != nil {
 		result = nil
 		err = queryErr
 		return result, err
 	}
-	defer rows.Close()
 
-	foundUsers := DeserializeUserRows(rows)
-	if len(foundUsers) == 0 {
+	foundAccounts := DeserializeAccountRows(rows)
+	if len(foundAccounts) == 0 {
 		result = nil
 		err = nil
 		return result, err
 	}
 
-	result = foundUsers[0]
+	result = foundAccounts[0]
+	err = nil
+	return result, err
+}
+func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id string, toPatchAccount *pb.Account) (result *pb.Account, err error) {
+	db := begin.Database("db")
+	filter := bson.D{{Key: "name", Value: toPatchAccount.Accountname}}
+	after := options.After
+	returnOpt := options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "account_name", Value: toPatchAccount.Accountname},
+			{Key: "password", Value: toPatchAccount.Password},
+			{Key: "created_at", Value: toPatchAccount.CreatedAt},
+			{Key: "updated_at", Value: toPatchAccount.UpdatedAt},
+		},
+		},
+	}
+	updateResult := db.Collection("accounts").FindOneAndUpdate(context.TODO(), filter, update, &returnOpt)
+	_ = updateResult.Decode(&result)
+	result = toPatchAccount
 	err = nil
 	return result, err
 }
 
-func (userRepository *UserRepository) GetUserByEmail(begin *sql.Tx, email string) (result *pb.User, err error) {
-	var rows *sql.Rows
-	var queryErr error
-	rows, queryErr = begin.Query(
-		`SELECT id, name, email, password, balance, created_at, updated_at FROM "users" WHERE email=$1 LIMIT 1;`,
-		email,
-	)
-
-	if queryErr != nil {
-		result = nil
-		err = queryErr
-		return result, err
-	}
-	defer rows.Close()
-
-	foundUsers := DeserializeUserRows(rows)
-	if len(foundUsers) == 0 {
-		result = nil
-		err = nil
-		return result, err
-	}
-
-	result = foundUsers[0]
-	err = nil
-	return result, err
-}
-
-func (userRepository *UserRepository) PatchOneById(begin *sql.Tx, id string, toPatchUser *pb.User) (result *pb.User, err error) {
+func (AccountRepository *AccountRepository) DeleteAccount(begin *sql.Tx, id string) (result *pb.Account, err error) {
 	rows, queryErr := begin.Query(
-		`UPDATE "users" SET id=$1, name=$2, email=$3, password=$4, balance=$5, created_at=$6, updated_at=$7 WHERE id = $8 ;`,
-		toPatchUser.Id,
-		toPatchUser.Name,
-		toPatchUser.Email,
-		toPatchUser.Password,
-		toPatchUser.Balance,
-		toPatchUser.CreatedAt.AsTime(),
-		toPatchUser.UpdatedAt.AsTime(),
-		id,
-	)
-
-	if queryErr != nil {
-		result = nil
-		err = queryErr
-		return
-	}
-	defer rows.Close()
-
-	result = toPatchUser
-	err = nil
-	return result, err
-}
-
-func (userRepository *UserRepository) DeleteUser(begin *sql.Tx, id string) (result *pb.User, err error) {
-	rows, queryErr := begin.Query(
-		`DELETE FROM "users" WHERE id=$1 RETURNING id, name,  email, password, balance, created_at, updated_at`,
+		`DELETE FROM "Accounts" WHERE id=$1 RETURNING id, name,  email, password, balance, created_at, updated_at`,
 		id,
 	)
 	if queryErr != nil {
@@ -193,14 +159,14 @@ func (userRepository *UserRepository) DeleteUser(begin *sql.Tx, id string) (resu
 		err = queryErr
 		return
 	}
-	foundUsers := DeserializeUserRows(rows)
-	if len(foundUsers) == 0 {
+	foundAccounts := DeserializeAccountRows(rows)
+	if len(foundAccounts) == 0 {
 		result = nil
 		err = nil
 		return result, err
 	}
 
-	result = foundUsers[0]
+	result = foundAccounts[0]
 	err = nil
 	return result, err
 }
