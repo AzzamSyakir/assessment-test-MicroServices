@@ -195,14 +195,14 @@ func (AccountUseCase *AccountUseCase) CreateAccount(context context.Context, req
 	return result, commit
 }
 func (AccountUseCase *AccountUseCase) DeleteAccount(context context.Context, id *pb.ById) (result *pb.AccountResponse, err error) {
-	begin, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
+	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
 	if err != nil {
 		return result, err
 	}
 
-	deletedAccount, deletedAccountErr := AccountUseCase.AccountRepository.DeleteAccount(begin, id.Id)
+	deletedAccount, deletedAccountErr := AccountUseCase.AccountRepository.DeleteAccount(AccountUseCase.DatabaseConfig.AccountDB.Connection, id.Id)
 	if deletedAccountErr != nil {
-		err = begin.AbortTransaction(context)
+		err = session.AbortTransaction(context)
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
 			Message: "AccountAccountCase DeleteAccount is failed, " + deletedAccountErr.Error(),
@@ -211,7 +211,7 @@ func (AccountUseCase *AccountUseCase) DeleteAccount(context context.Context, id 
 		return result, err
 	}
 	if deletedAccount == nil {
-		err = begin.AbortTransaction(context)
+		err = session.AbortTransaction(context)
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Canceled),
 			Message: "AccountAccountCase DeleteAccount is failed, Account is not deleted by id, " + id.Id,
@@ -220,7 +220,7 @@ func (AccountUseCase *AccountUseCase) DeleteAccount(context context.Context, id 
 		return result, err
 	}
 
-	err = begin.CommitTransaction(context)
+	err = session.CommitTransaction(context)
 	result = &pb.AccountResponse{
 		Code:    int64(codes.OK),
 		Message: "AccountAccountCase DeleteAccount is succeed.",
@@ -229,9 +229,9 @@ func (AccountUseCase *AccountUseCase) DeleteAccount(context context.Context, id 
 	return result, err
 }
 func (AccountUseCase *AccountUseCase) ListAccounts(context context.Context, empty *pb.Empty) (result *pb.AccountResponseRepeated, err error) {
-	begin, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
+	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
 	if err != nil {
-		rollback := begin.AbortTransaction(context)
+		rollback := session.AbortTransaction(context)
 		errorMessage := fmt.Sprintf("begin failed :%s", err)
 		result = &pb.AccountResponseRepeated{
 			Code:    int64(codes.Internal),
@@ -241,9 +241,9 @@ func (AccountUseCase *AccountUseCase) ListAccounts(context context.Context, empt
 		return result, rollback
 	}
 
-	ListAccount, err := AccountUseCase.AccountRepository.ListAccount(begin)
+	ListAccount, err := AccountUseCase.AccountRepository.ListAccount(AccountUseCase.DatabaseConfig.AccountDB.Connection)
 	if err != nil {
-		rollback := begin.AbortTransaction(context)
+		rollback := session.AbortTransaction(context)
 		errorMessage := fmt.Sprintf("AccountUseCase ListAccount is failed, query failed : %s", err)
 		result = &pb.AccountResponseRepeated{
 			Code:    int64(codes.Internal),
@@ -254,7 +254,7 @@ func (AccountUseCase *AccountUseCase) ListAccounts(context context.Context, empt
 	}
 
 	if ListAccount.Data == nil {
-		rollback := begin.AbortTransaction(context)
+		rollback := session.AbortTransaction(context)
 		result = &pb.AccountResponseRepeated{
 			Code:    int64(codes.Canceled),
 			Message: "Account UseCase ListAccount is failed, data Account is empty ",
@@ -262,7 +262,7 @@ func (AccountUseCase *AccountUseCase) ListAccounts(context context.Context, empt
 		}
 		return result, rollback
 	}
-	commit := begin.CommitTransaction(context)
+	commit := session.CommitTransaction(context)
 	result = &pb.AccountResponseRepeated{
 		Code:    int64(codes.OK),
 		Message: "Account UseCase ListAccount is succeed.",
