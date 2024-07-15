@@ -55,30 +55,21 @@ func (AccountRepository *AccountRepository) CreateAccount(begin *mongo.Client, t
 	return result, err
 }
 
-func (AccountRepository *AccountRepository) ListAccount(begin *sql.Tx) (result *pb.AccountResponseRepeated, err error) {
-	var rows *sql.Rows
-	var queryErr error
-	rows, queryErr = begin.Query(
-		`SELECT id, name, email, password, balance, created_at, updated_at FROM "Accounts" `,
-	)
-
-	if queryErr != nil {
+func (AccountRepository *AccountRepository) ListAccount(begin *mongo.Client) (result *pb.AccountResponseRepeated, err error) {
+	db := begin.Database("db")
+	findOptions := options.Find()
+	cursor, cursorErr := db.Collection("accounts").Find(context.TODO(), nil, findOptions)
+	if cursorErr != nil {
 		result = nil
-		err = queryErr
+		err = cursorErr
 		return result, err
 	}
-	defer rows.Close()
 	var ListAccounts []*pb.Account
 	var createdAt, updatedAt null.Time
-	for rows.Next() {
+
+	for cursor.Next(context.TODO()) {
 		ListAccount := &pb.Account{}
-		scanErr := rows.Scan(
-			&ListAccount.Id,
-			&ListAccount.Accountname,
-			&ListAccount.Password,
-			&createdAt,
-			&updatedAt,
-		)
+		scanErr := cursor.Decode(&ListAccount)
 		ListAccount.CreatedAt = timestamppb.New(createdAt.Time)
 		ListAccount.UpdatedAt = timestamppb.New(updatedAt.Time)
 		if scanErr != nil {
@@ -122,7 +113,7 @@ func (AccountRepository *AccountRepository) GetAccountById(begin *mongo.Client, 
 }
 func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id string, toPatchAccount *pb.Account) (result *pb.Account, err error) {
 	db := begin.Database("db")
-	filter := bson.D{{Key: "name", Value: toPatchAccount.Accountname}}
+	filter := bson.D{{Key: "id", Value: id}}
 	after := options.After
 	returnOpt := options.FindOneAndUpdateOptions{
 		ReturnDocument: &after,
@@ -143,24 +134,15 @@ func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id
 	return result, err
 }
 
-func (AccountRepository *AccountRepository) DeleteAccount(begin *sql.Tx, id string) (result *pb.Account, err error) {
-	rows, queryErr := begin.Query(
-		`DELETE FROM "Accounts" WHERE id=$1 RETURNING id, name,  email, password, balance, created_at, updated_at`,
-		id,
-	)
-	if queryErr != nil {
-		result = nil
-		err = queryErr
-		return
-	}
-	foundAccounts := DeserializeAccountRows(rows)
-	if len(foundAccounts) == 0 {
-		result = nil
-		err = nil
-		return result, err
-	}
+func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, id string) (result *pb.Account, err error) {
+	db := begin.Database("db")
+	filter := bson.D{{Key: "id", Value: id}}
+	returnOpt := options.FindOneAndDeleteOptions{}
+	res := db.Collection("accounts").FindOneAndDelete(context.TODO(), filter, &returnOpt)
 
-	result = foundAccounts[0]
-	err = nil
+	err = res.Decode(&result)
+	if err != nil {
+		return nil, err
+	}
 	return result, err
 }
