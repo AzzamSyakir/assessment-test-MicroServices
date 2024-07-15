@@ -144,9 +144,9 @@ func (AccountUseCase *AccountUseCase) UpdateAccount(context context.Context, req
 	return result, commit
 }
 func (AccountUseCase *AccountUseCase) CreateAccount(context context.Context, request *pb.CreateAccountRequest) (result *pb.AccountResponse, err error) {
-	begin, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
+	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
 	if err != nil {
-		rollback := begin.AbortTransaction(context)
+		rollback := session.AbortTransaction(context)
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
 			Message: "AccountUseCase Register is failed, begin fail," + err.Error(),
@@ -157,7 +157,7 @@ func (AccountUseCase *AccountUseCase) CreateAccount(context context.Context, req
 
 	hashedPassword, hashedPasswordErr := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	if hashedPasswordErr != nil {
-		err = begin.AbortTransaction(context)
+		err = session.AbortTransaction(context)
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Canceled),
 			Message: "AccountUseCase Register is failed, password hashing is failed.",
@@ -175,9 +175,9 @@ func (AccountUseCase *AccountUseCase) CreateAccount(context context.Context, req
 		UpdatedAt:   timestamppb.New(currentTime.Time),
 	}
 
-	createdAccount, err := AccountUseCase.AccountRepository.CreateAccount(begin, newAccount)
+	createdAccount, err := AccountUseCase.AccountRepository.CreateAccount(AccountUseCase.DatabaseConfig.AccountDB.Connection, newAccount)
 	if err != nil {
-		rollback := begin.AbortTransaction(context)
+		rollback := session.AbortTransaction(context)
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
 			Message: "AccountUseCase Register is failed, query to db fail, " + err.Error(),
@@ -186,7 +186,7 @@ func (AccountUseCase *AccountUseCase) CreateAccount(context context.Context, req
 		return result, rollback
 	}
 
-	commit := begin.CommitTransaction(context)
+	commit := session.CommitTransaction(context)
 	result = &pb.AccountResponse{
 		Code:    int64(codes.OK),
 		Message: "AccountUseCase Register is succeed.",
