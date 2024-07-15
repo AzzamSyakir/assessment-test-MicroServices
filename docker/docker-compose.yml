@@ -7,6 +7,24 @@ services:
     - ${MONGO_PORT}:${MONGO_PORT}
     volumes:
       - mongodb-data:/data/db
-      - ./mongodb/initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro      
+      - ./mongodb/initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro  
+
+  # account-employee-services:
+  #   container_name: account-employee-services
+  #   restart: always
+  #   build:
+  #     ctx: ../
+  #     dockerfile: ./src/account-employee-service/Dockerfile
+  #   environment:
+  #     POSTGRES_HOST: account-employee-db
+  #   expose:
+  #     - 8080
+  #   ports:
+  #    - ${USER_SERVICES_PORT}:${USER_SERVICES_PORT}
+  #   depends_on:
+  #     - account-employee-db
+  #   volumes:
+  #     - ../src/account-employee-service/:/app/src/account-employee-service/
+
 volumes:
   mongodb-data:

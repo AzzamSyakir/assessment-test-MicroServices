@@ -12,28 +12,28 @@ type AppEnv struct {
 type PostgresEnv struct {
 	Host     string
 	Port     string
-	User     string
+	Account  string
 	Password string
 	Database string
 }
 
 type EnvConfig struct {
-	App    *AppEnv
-	UserDB *PostgresEnv
+	App       *AppEnv
+	AccountDB *PostgresEnv
 }
 
 func NewEnvConfig() *EnvConfig {
 	envConfig := &EnvConfig{
 		App: &AppEnv{
 			Host: os.Getenv("GATEWAY_APP_HOST"),
-			Port: os.Getenv("USER_SERVICES_PORT"),
+			Port: os.Getenv("Account_SERVICES_PORT"),
 		},
-		UserDB: &PostgresEnv{
-			Host:     os.Getenv("POSTGRES_HOST"),
-			Port:     os.Getenv("POSTGRES_USER_PORT"),
-			User:     os.Getenv("POSTGRES_USER"),
-			Password: os.Getenv("POSTGRES_PASSWORD"),
-			Database: "user_db",
+		AccountDB: &PostgresEnv{
+			Host:     os.Getenv("MONGO_HOST"),
+			Port:     os.Getenv("MONGO_PORT"),
+			Account:  os.Getenv("MONGO_USER"),
+			Password: os.Getenv("MONGO_PASSWORD"),
+			Database: "db",
 		},
 	}
 	return envConfig

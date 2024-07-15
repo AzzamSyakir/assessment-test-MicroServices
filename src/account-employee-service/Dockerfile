@@ -16,7 +16,7 @@ WORKDIR $WORKDIR
 # copy source from host to docker container
 COPY ./src/account-employee-service/ ./src/account-employee-service/
 COPY grpc/ grpc/
-COPY user.air.toml .
+COPY Account.air.toml .
 COPY .env .
 COPY go.mod .
 COPY go.sum .
@@ -28,4 +28,4 @@ RUN go mod download
 
 # run the Go app.
 WORKDIR $WORKDIR
-CMD ["air", "-c", "user.air.toml"]
+CMD ["air", "-c", "Account.air.toml"]

@@ -36,7 +36,9 @@ message AccountResponseRepeated{
 message UpdateAccountRequest{
   string id=1;
   optional string name=2;
+  optional string password=3;
 }
 message CreateAccountRequest{
   string name=1;
+  string password=2;
 }

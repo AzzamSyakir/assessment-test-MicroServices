@@ -1,3 +1,15 @@
+# services command
+start-gateway:
+	clear && go run src/gateway-service/cmd/web/main.go
+
+start-account-employee:
+	clear && go run src/account-employee-service/cmd/web/main.go
+
+start-product:
+	clear && go run src/product-service/cmd/web/main.go
+
+start-order:
+	clear && go run src/order-service/cmd/web/main.go
 # docker command
 start-docker:
 	clear && docker compose -f ./docker/docker-compose.yml up -d 

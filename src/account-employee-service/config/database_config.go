@@ -1,59 +1,57 @@
 package config
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
-	"time"
 
-	_ "github.com/lib/pq"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type DatabaseConfig struct {
-	UserDB *PostgresDatabase
+	AccountDB *mongoDB
 }
 
-type PostgresDatabase struct {
-	Connection *sql.DB
+type mongoDB struct {
+	Connection *mongo.Client
 }
 
-func NewUserDBConfig(envConfig *EnvConfig) *DatabaseConfig {
+func NewAccountDBConfig(envConfig *EnvConfig) *DatabaseConfig {
 	databaseConfig := &DatabaseConfig{
-		UserDB: NewUserDB(envConfig),
+		AccountDB: NewAccountDB(envConfig),
 	}
 	return databaseConfig
 }
 
-func NewUserDB(envConfig *EnvConfig) *PostgresDatabase {
-	var url string
-	if envConfig.UserDB.Password == "" {
-		url = fmt.Sprintf(
-			"postgresql://%s@%s:%s/%s",
-			envConfig.UserDB.User,
-			envConfig.UserDB.Host,
-			envConfig.UserDB.Port,
-			envConfig.UserDB.Database,
+func NewAccountDB(envConfig *EnvConfig) *mongoDB {
+	var uri string
+	if envConfig.AccountDB.Password == "" {
+		uri = fmt.Sprintf(
+			"mongodb://%s@%s:%s/%s",
+			envConfig.AccountDB.Account,
+			envConfig.AccountDB.Host,
+			envConfig.AccountDB.Port,
+			envConfig.AccountDB.Database,
 		)
 	} else {
-		url = fmt.Sprintf(
-			"postgresql://%s:%s@%s:%s/%s?sslmode=disable",
-			envConfig.UserDB.User,
-			envConfig.UserDB.Password,
-			envConfig.UserDB.Host,
-			envConfig.UserDB.Port,
-			envConfig.UserDB.Database,
+		uri = fmt.Sprintf(
+			"mongodb://%s:%s@%s:%s/%s",
+			envConfig.AccountDB.Account,
+			envConfig.AccountDB.Password,
+			envConfig.AccountDB.Host,
+			envConfig.AccountDB.Port,
+			envConfig.AccountDB.Database,
 		)
 	}
 
-	connection, err := sql.Open("postgres", url)
+	connection, err := mongo.Connect(context.TODO(), options.Client().
+		ApplyURI(uri))
 	if err != nil {
 		panic(err)
 	}
-	connection.SetConnMaxLifetime(300 * time.Second)
-	connection.SetMaxIdleConns(10)
-	connection.SetMaxOpenConns(10)
 
-	userDB := &PostgresDatabase{
+	AccountDB := &mongoDB{
 		Connection: connection,
 	}
-	return userDB
+	return AccountDB
 }
