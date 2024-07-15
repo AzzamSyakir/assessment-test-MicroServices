@@ -41,15 +41,9 @@ func DeserializeAccountRows(rows *sql.Rows) []*pb.Account {
 	return foundAccounts
 }
 
-func (AccountRepository *AccountRepository) CreateAccount(begin *sql.Tx, toCreateAccount *pb.Account) (result *pb.Account, err error) {
-	_, queryErr := begin.Query(
-		`INSERT INTO "Accounts" (id, name, email, password, balance, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7);`,
-		toCreateAccount.Id,
-		toCreateAccount.Accountname,
-		toCreateAccount.Password,
-		toCreateAccount.CreatedAt.AsTime(),
-		toCreateAccount.UpdatedAt.AsTime(),
-	)
+func (AccountRepository *AccountRepository) CreateAccount(begin *mongo.Client, toCreateAccount *pb.Account) (result *pb.Account, err error) {
+	db := begin.Database("db")
+	_, queryErr := db.Collection("accounts").InsertOne(context.TODO(), toCreateAccount)
 	if queryErr != nil {
 		result = nil
 		err = queryErr
