@@ -103,22 +103,20 @@ func (AccountUseCase *AccountUseCase) UpdateAccount(context context.Context, req
 
 	foundAccount, err := AccountUseCase.AccountRepository.GetAccountById(begin, request.Id)
 	if err != nil {
-		rollback := session.AbortTransaction(context)
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Canceled),
 			Message: "AccountUseCase UpdateAccount is failed, query to db fail, " + err.Error(),
 			Data:    nil,
 		}
-		return result, rollback
+		return result, session.AbortTransaction(context)
 	}
 	if foundAccount == nil {
-		rollback := session.AbortTransaction(context)
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Canceled),
 			Message: "AccountAccountCase UpdateAccount is failed, Account is not found by id " + request.Id,
 			Data:    nil,
 		}
-		return result, rollback
+		return result, session.AbortTransaction(context)
 	}
 	if request.Name != nil {
 		foundAccount.Accountname = *request.Name
@@ -126,13 +124,12 @@ func (AccountUseCase *AccountUseCase) UpdateAccount(context context.Context, req
 	if request.Password != nil {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(*request.Password), bcrypt.DefaultCost)
 		if err != nil {
-			rollback := session.AbortTransaction(context)
 			result = &pb.AccountResponse{
 				Code:    int64(codes.Canceled),
 				Message: "AccountUseCase UpdateAccount is failed, password hashing is failed, " + err.Error(),
 				Data:    nil,
 			}
-			return result, rollback
+			return result, session.AbortTransaction(context)
 		}
 
 		foundAccount.Password = string(hashedPassword)
@@ -140,23 +137,21 @@ func (AccountUseCase *AccountUseCase) UpdateAccount(context context.Context, req
 	time := time.Now()
 	foundAccount.UpdatedAt = timestamppb.New(time)
 	patchedAccount, err := AccountUseCase.AccountRepository.PatchOneById(begin, request.Id, foundAccount)
+	fmt.Println("update acc error", err)
 	if err != nil {
-		rollback := session.AbortTransaction(context)
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
 			Message: "AccountUseCase UpdateAccount is failed, query to db fail, " + err.Error(),
 			Data:    nil,
 		}
-		return result, rollback
+		return result, session.AbortTransaction(context)
 	}
-
-	commit := session.CommitTransaction(context)
 	result = &pb.AccountResponse{
 		Code:    int64(codes.OK),
 		Message: "AccountAccountCase UpdateAccount is succeed.",
 		Data:    patchedAccount,
 	}
-	return result, commit
+	return result, session.CommitTransaction(context)
 }
 func (AccountUseCase *AccountUseCase) CreateAccount(context context.Context, request *pb.CreateAccountRequest) (result *pb.AccountResponse, err error) {
 	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
