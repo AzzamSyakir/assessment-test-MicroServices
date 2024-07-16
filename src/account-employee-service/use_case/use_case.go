@@ -86,7 +86,7 @@ func (AccountUseCase *AccountUseCase) UpdateAccount(context context.Context, req
 	if err != nil {
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase Register is failed, startSession fail," + err.Error(),
+			Message: "AccountUseCase UpdateAccount is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
@@ -95,7 +95,7 @@ func (AccountUseCase *AccountUseCase) UpdateAccount(context context.Context, req
 	if err != nil {
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase Register is failed, StartTransaction fail," + err.Error(),
+			Message: "AccountUseCase UpdateAccount is failed, StartTransaction fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, nil
@@ -119,7 +119,7 @@ func (AccountUseCase *AccountUseCase) UpdateAccount(context context.Context, req
 		return result, session.AbortTransaction(context)
 	}
 	if request.Name != nil {
-		foundAccount.Accountname = *request.Name
+		foundAccount.AccountName = *request.Name
 	}
 	if request.Password != nil {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(*request.Password), bcrypt.DefaultCost)
@@ -137,7 +137,6 @@ func (AccountUseCase *AccountUseCase) UpdateAccount(context context.Context, req
 	time := time.Now()
 	foundAccount.UpdatedAt = timestamppb.New(time)
 	patchedAccount, err := AccountUseCase.AccountRepository.PatchOneById(begin, request.Id, foundAccount)
-	fmt.Println("update acc error", err)
 	if err != nil {
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
@@ -185,7 +184,7 @@ func (AccountUseCase *AccountUseCase) CreateAccount(context context.Context, req
 
 	currentTime := null.NewTime(time.Now(), true)
 	newAccount := &pb.Account{
-		Accountname: request.Name,
+		AccountName: request.Name,
 		Password:    string(hashedPassword),
 		CreatedAt:   timestamppb.New(currentTime.Time),
 		UpdatedAt:   timestamppb.New(currentTime.Time),
@@ -210,9 +209,22 @@ func (AccountUseCase *AccountUseCase) CreateAccount(context context.Context, req
 func (AccountUseCase *AccountUseCase) DeleteAccount(context context.Context, id *pb.ById) (result *pb.AccountResponse, err error) {
 	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
 	if err != nil {
-		return result, err
+		result = &pb.AccountResponse{
+			Code:    int64(codes.Internal),
+			Message: "AccountUseCase DeleteAccount is failed, startSession fail," + err.Error(),
+			Data:    nil,
+		}
+		return result, session.AbortTransaction(context)
 	}
-
+	err = session.StartTransaction()
+	if err != nil {
+		result = &pb.AccountResponse{
+			Code:    int64(codes.Internal),
+			Message: "AccountUseCase DeleteAccount is failed, StartTransaction fail," + err.Error(),
+			Data:    nil,
+		}
+		return result, nil
+	}
 	deletedAccount, deletedAccountErr := AccountUseCase.AccountRepository.DeleteAccount(AccountUseCase.DatabaseConfig.AccountDB.Connection, id.Id)
 	if deletedAccountErr != nil {
 		err = session.AbortTransaction(context)

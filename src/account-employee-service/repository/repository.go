@@ -2,6 +2,7 @@ package repository
 
 import (
 	"assesement-test-MicroServices/grpc/pb"
+	"assesement-test-MicroServices/src/account-employee-service/model"
 	"context"
 
 	"github.com/guregu/null"
@@ -23,7 +24,7 @@ func NewAccountRepository() *AccountRepository {
 func (AccountRepository *AccountRepository) CreateAccount(begin *mongo.Client, toCreateAccount *pb.Account) (result *pb.Account, err error) {
 	db := begin.Database("db")
 	createAcc := bson.D{
-		{Key: "account_name", Value: toCreateAccount.Accountname},
+		{Key: "account_name", Value: toCreateAccount.AccountName},
 		{Key: "password", Value: toCreateAccount.Password},
 		{Key: "created_at", Value: toCreateAccount.CreatedAt},
 		{Key: "updated_at", Value: toCreateAccount.UpdatedAt},
@@ -73,24 +74,26 @@ func (AccountRepository *AccountRepository) ListAccount(begin *mongo.Client) (re
 }
 
 func (AccountRepository *AccountRepository) GetAccountById(begin *mongo.Client, id string) (result *pb.Account, err error) {
-	var foundAccounts *pb.Account
-	var queryErr error
+	var foundAccount model.Account
 	db := begin.Database("db")
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
+	objID, objErr := primitive.ObjectIDFromHex(id)
+	if objErr != nil {
 		result = nil
-		err = queryErr
+		err = objErr
 		return result, err
 	}
-
-	queryErr = db.Collection("accounts").FindOne(context.Background(), bson.D{{Key: "_id", Value: objID}}).Decode(&foundAccounts)
-
+	queryErr := db.Collection("accounts").FindOne(context.Background(), bson.D{{Key: "_id", Value: objID}}).Decode(&foundAccount)
 	if queryErr != nil {
 		result = nil
 		err = queryErr
 		return result, err
 	}
-	result = foundAccounts
+	result = &pb.Account{
+		AccountName: foundAccount.AccountName,
+		Password:    foundAccount.Password,
+		CreatedAt:   foundAccount.CreatedAt,
+		UpdatedAt:   foundAccount.UpdatedAt,
+	}
 	err = nil
 	return result, err
 }
@@ -105,7 +108,7 @@ func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id
 	filter := bson.D{{Key: "_id", Value: objID}}
 	update := bson.D{
 		{Key: "$set", Value: bson.D{
-			{Key: "account_name", Value: toPatchAccount.Accountname},
+			{Key: "account_name", Value: toPatchAccount.AccountName},
 			{Key: "password", Value: toPatchAccount.Password},
 			{Key: "created_at", Value: toPatchAccount.CreatedAt},
 			{Key: "updated_at", Value: toPatchAccount.UpdatedAt},
@@ -125,13 +128,25 @@ func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id
 
 func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, id string) (result *pb.Account, err error) {
 	db := begin.Database("db")
-	filter := bson.D{{Key: "id", Value: id}}
-	returnOpt := options.FindOneAndDeleteOptions{}
-	res := db.Collection("accounts").FindOneAndDelete(context.TODO(), filter, &returnOpt)
-
-	err = res.Decode(&result)
-	if err != nil {
+	var foundAccounts *pb.Account
+	objID, objErr := primitive.ObjectIDFromHex(id)
+	if objErr != nil {
+		result = nil
+		err = objErr
+		return
+	}
+	filter := bson.D{{Key: "_id", Value: objID}}
+	queryErr := db.Collection("accounts").FindOne(context.Background(), filter).Decode(&foundAccounts)
+	if queryErr != nil {
+		result = nil
+		err = queryErr
+		return result, err
+	}
+	_, deleteError := db.Collection("accounts").DeleteOne(context.TODO(), filter)
+	if deleteError != nil {
 		return nil, err
 	}
+	result = foundAccounts
+	err = nil
 	return result, err
 }
