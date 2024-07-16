@@ -22,7 +22,13 @@ func NewAccountRepository() *AccountRepository {
 
 func (AccountRepository *AccountRepository) CreateAccount(begin *mongo.Client, toCreateAccount *pb.Account) (result *pb.Account, err error) {
 	db := begin.Database("db")
-	_, queryErr := db.Collection("accounts").InsertOne(context.TODO(), toCreateAccount)
+	createAcc := bson.D{
+		{Key: "account_name", Value: toCreateAccount.Accountname},
+		{Key: "password", Value: toCreateAccount.Password},
+		{Key: "created_at", Value: toCreateAccount.CreatedAt},
+		{Key: "updated_at", Value: toCreateAccount.UpdatedAt},
+	}
+	_, queryErr := db.Collection("accounts").InsertOne(context.TODO(), createAcc)
 	if queryErr != nil {
 		result = nil
 		err = queryErr
@@ -90,11 +96,13 @@ func (AccountRepository *AccountRepository) GetAccountById(begin *mongo.Client, 
 }
 func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id string, toPatchAccount *pb.Account) (result *pb.Account, err error) {
 	db := begin.Database("db")
-	filter := bson.D{{Key: "id", Value: id}}
-	after := options.After
-	returnOpt := options.FindOneAndUpdateOptions{
-		ReturnDocument: &after,
+	objID, objErr := primitive.ObjectIDFromHex(id)
+	if objErr != nil {
+		result = nil
+		err = objErr
+		return
 	}
+	filter := bson.D{{Key: "_id", Value: objID}}
 	update := bson.D{
 		{Key: "$set", Value: bson.D{
 			{Key: "account_name", Value: toPatchAccount.Accountname},
@@ -104,8 +112,12 @@ func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id
 		},
 		},
 	}
-	updateResult := db.Collection("accounts").FindOneAndUpdate(context.TODO(), filter, update, &returnOpt)
-	_ = updateResult.Decode(&result)
+	_, queryErr := db.Collection("accounts").UpdateOne(context.TODO(), filter, update)
+	if queryErr != nil {
+		result = nil
+		err = queryErr
+		return
+	}
 	result = toPatchAccount
 	err = nil
 	return result, err
