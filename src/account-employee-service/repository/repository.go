@@ -41,38 +41,6 @@ func (AccountRepository *AccountRepository) CreateAccount(begin *mongo.Client, t
 	return result, err
 }
 
-func (AccountRepository *AccountRepository) ListAccount(begin *mongo.Client) (result *pb.AccountResponseRepeated, err error) {
-	db := begin.Database("db")
-	findOptions := options.Find()
-	cursor, cursorErr := db.Collection("accounts").Find(context.TODO(), nil, findOptions)
-	if cursorErr != nil {
-		result = nil
-		err = cursorErr
-		return result, err
-	}
-	var ListAccounts []*pb.Account
-	var createdAt, updatedAt null.Time
-
-	for cursor.Next(context.TODO()) {
-		ListAccount := &pb.Account{}
-		scanErr := cursor.Decode(&ListAccount)
-		ListAccount.CreatedAt = timestamppb.New(createdAt.Time)
-		ListAccount.UpdatedAt = timestamppb.New(updatedAt.Time)
-		if scanErr != nil {
-			result = nil
-			err = scanErr
-			return result, err
-		}
-		ListAccounts = append(ListAccounts, ListAccount)
-	}
-
-	result = &pb.AccountResponseRepeated{
-		Data: ListAccounts,
-	}
-	err = nil
-	return result, err
-}
-
 func (AccountRepository *AccountRepository) GetAccountById(begin *mongo.Client, id string) (result *pb.Account, err error) {
 	var foundAccount model.Account
 	db := begin.Database("db")
@@ -151,6 +119,44 @@ func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, i
 		Password:    foundAccount.Password,
 		CreatedAt:   foundAccount.CreatedAt,
 		UpdatedAt:   foundAccount.UpdatedAt,
+	}
+	err = nil
+	return result, err
+}
+
+func (AccountRepository *AccountRepository) ListAccount(begin *mongo.Client) (result *pb.AccountResponseRepeated, err error) {
+	db := begin.Database("db")
+	findOptions := options.Find()
+	cursor, cursorErr := db.Collection("accounts").Find(context.TODO(), bson.D{{}}, findOptions)
+	if cursorErr != nil {
+		result = nil
+		err = cursorErr
+		return result, err
+	}
+	var ListAccountsPb []*pb.Account
+	var createdAt, updatedAt null.Time
+
+	for cursor.Next(context.TODO()) {
+		ListAccount := &model.Account{}
+		scanErr := cursor.Decode(&ListAccount)
+		ListAccount.CreatedAt = timestamppb.New(createdAt.Time)
+		ListAccount.UpdatedAt = timestamppb.New(updatedAt.Time)
+		if scanErr != nil {
+			result = nil
+			err = scanErr
+			return result, err
+		}
+		ListAccountPb := &pb.Account{
+			AccountName: ListAccount.AccountName,
+			Password:    ListAccount.Password,
+			CreatedAt:   ListAccount.CreatedAt,
+			UpdatedAt:   ListAccount.UpdatedAt,
+		}
+		ListAccountsPb = append(ListAccountsPb, ListAccountPb)
+	}
+
+	result = &pb.AccountResponseRepeated{
+		Data: ListAccountsPb,
 	}
 	err = nil
 	return result, err

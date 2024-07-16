@@ -256,16 +256,22 @@ func (AccountUseCase *AccountUseCase) DeleteAccount(context context.Context, id 
 func (AccountUseCase *AccountUseCase) ListAccounts(context context.Context, empty *pb.Empty) (result *pb.AccountResponseRepeated, err error) {
 	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
 	if err != nil {
-		rollback := session.AbortTransaction(context)
-		errorMessage := fmt.Sprintf("begin failed :%s", err)
 		result = &pb.AccountResponseRepeated{
 			Code:    int64(codes.Internal),
-			Message: errorMessage,
+			Message: "AccountUseCase ListAccount is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
-		return result, rollback
+		return result, session.AbortTransaction(context)
 	}
-
+	err = session.StartTransaction()
+	if err != nil {
+		result = &pb.AccountResponseRepeated{
+			Code:    int64(codes.Internal),
+			Message: "AccountUseCase ListAccount is failed, StartTransaction fail," + err.Error(),
+			Data:    nil,
+		}
+		return result, nil
+	}
 	ListAccount, err := AccountUseCase.AccountRepository.ListAccount(AccountUseCase.DatabaseConfig.AccountDB.Connection)
 	if err != nil {
 		rollback := session.AbortTransaction(context)
