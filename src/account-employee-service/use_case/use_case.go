@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/guregu/null"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
@@ -35,13 +34,21 @@ func NewAccountUseCase(
 func (AccountUseCase *AccountUseCase) GetAccountById(context context.Context, id *pb.ById) (result *pb.AccountResponse, err error) {
 	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
 	if err != nil {
-		rollback := session.AbortTransaction(context)
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase GetAccountById is failed, Session fail, " + err.Error(),
+			Message: "AccountUseCase Register is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
-		return result, rollback
+		return result, session.AbortTransaction(context)
+	}
+	err = session.StartTransaction()
+	if err != nil {
+		result = &pb.AccountResponse{
+			Code:    int64(codes.Internal),
+			Message: "AccountUseCase Register is failed, StartTransaction fail," + err.Error(),
+			Data:    nil,
+		}
+		return result, nil
 	}
 	GetAccountById, GetAccountByIdErr := AccountUseCase.AccountRepository.GetAccountById(AccountUseCase.DatabaseConfig.AccountDB.Connection, id.Id)
 	if GetAccountByIdErr != nil {
@@ -77,13 +84,21 @@ func (AccountUseCase *AccountUseCase) UpdateAccount(context context.Context, req
 	begin := AccountUseCase.DatabaseConfig.AccountDB.Connection
 	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
 	if err != nil {
-		rollback := session.AbortTransaction(context)
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase UpdateAccount is failed, session fail, " + err.Error(),
+			Message: "AccountUseCase Register is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
-		return result, rollback
+		return result, session.AbortTransaction(context)
+	}
+	err = session.StartTransaction()
+	if err != nil {
+		result = &pb.AccountResponse{
+			Code:    int64(codes.Internal),
+			Message: "AccountUseCase Register is failed, StartTransaction fail," + err.Error(),
+			Data:    nil,
+		}
+		return result, nil
 	}
 
 	foundAccount, err := AccountUseCase.AccountRepository.GetAccountById(begin, request.Id)
@@ -175,7 +190,6 @@ func (AccountUseCase *AccountUseCase) CreateAccount(context context.Context, req
 
 	currentTime := null.NewTime(time.Now(), true)
 	newAccount := &pb.Account{
-		Id:          uuid.NewString(),
 		Accountname: request.Name,
 		Password:    string(hashedPassword),
 		CreatedAt:   timestamppb.New(currentTime.Time),

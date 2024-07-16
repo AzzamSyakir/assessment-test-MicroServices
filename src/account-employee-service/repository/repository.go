@@ -3,10 +3,10 @@ package repository
 import (
 	"assesement-test-MicroServices/grpc/pb"
 	"context"
-	"database/sql"
 
 	"github.com/guregu/null"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -18,27 +18,6 @@ type AccountRepository struct {
 func NewAccountRepository() *AccountRepository {
 	AccountRepository := &AccountRepository{}
 	return AccountRepository
-}
-func DeserializeAccountRows(rows *sql.Rows) []*pb.Account {
-	var foundAccounts []*pb.Account
-	for rows.Next() {
-		foundAccount := &pb.Account{}
-		var createdAt, updatedAt null.Time
-		scanErr := rows.Scan(
-			&foundAccount.Id,
-			&foundAccount.Accountname,
-			&foundAccount.Password,
-			&createdAt,
-			&updatedAt,
-		)
-		foundAccount.CreatedAt = timestamppb.New(createdAt.Time)
-		foundAccount.UpdatedAt = timestamppb.New(updatedAt.Time)
-		if scanErr != nil {
-			panic(scanErr)
-		}
-		foundAccounts = append(foundAccounts, foundAccount)
-	}
-	return foundAccounts
 }
 
 func (AccountRepository *AccountRepository) CreateAccount(begin *mongo.Client, toCreateAccount *pb.Account) (result *pb.Account, err error) {
@@ -88,26 +67,24 @@ func (AccountRepository *AccountRepository) ListAccount(begin *mongo.Client) (re
 }
 
 func (AccountRepository *AccountRepository) GetAccountById(begin *mongo.Client, id string) (result *pb.Account, err error) {
-	var rows *sql.Rows
+	var foundAccounts *pb.Account
 	var queryErr error
 	db := begin.Database("db")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		result = nil
+		err = queryErr
+		return result, err
+	}
 
-	queryErr = db.Collection("accounts").FindOne(context.Background(), bson.D{{Key: "id", Value: id}}).Decode(&rows)
+	queryErr = db.Collection("accounts").FindOne(context.Background(), bson.D{{Key: "_id", Value: objID}}).Decode(&foundAccounts)
 
 	if queryErr != nil {
 		result = nil
 		err = queryErr
 		return result, err
 	}
-
-	foundAccounts := DeserializeAccountRows(rows)
-	if len(foundAccounts) == 0 {
-		result = nil
-		err = nil
-		return result, err
-	}
-
-	result = foundAccounts[0]
+	result = foundAccounts
 	err = nil
 	return result, err
 }
