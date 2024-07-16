@@ -128,7 +128,7 @@ func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id
 
 func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, id string) (result *pb.Account, err error) {
 	db := begin.Database("db")
-	var foundAccounts *pb.Account
+	var foundAccount model.Account
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -136,7 +136,7 @@ func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, i
 		return
 	}
 	filter := bson.D{{Key: "_id", Value: objID}}
-	queryErr := db.Collection("accounts").FindOne(context.Background(), filter).Decode(&foundAccounts)
+	queryErr := db.Collection("accounts").FindOne(context.Background(), filter).Decode(&foundAccount)
 	if queryErr != nil {
 		result = nil
 		err = queryErr
@@ -146,7 +146,12 @@ func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, i
 	if deleteError != nil {
 		return nil, err
 	}
-	result = foundAccounts
+	result = &pb.Account{
+		AccountName: foundAccount.AccountName,
+		Password:    foundAccount.Password,
+		CreatedAt:   foundAccount.CreatedAt,
+		UpdatedAt:   foundAccount.UpdatedAt,
+	}
 	err = nil
 	return result, err
 }
