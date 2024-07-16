@@ -146,24 +146,31 @@ func (AccountUseCase *AccountUseCase) UpdateAccount(context context.Context, req
 func (AccountUseCase *AccountUseCase) CreateAccount(context context.Context, request *pb.CreateAccountRequest) (result *pb.AccountResponse, err error) {
 	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
 	if err != nil {
-		rollback := session.AbortTransaction(context)
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase Register is failed, begin fail," + err.Error(),
+			Message: "AccountUseCase Register is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
-		return result, rollback
+		return result, session.AbortTransaction(context)
+	}
+	err = session.StartTransaction()
+	if err != nil {
+		result = &pb.AccountResponse{
+			Code:    int64(codes.Internal),
+			Message: "AccountUseCase Register is failed, StartTransaction fail," + err.Error(),
+			Data:    nil,
+		}
+		return result, nil
 	}
 
 	hashedPassword, hashedPasswordErr := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	if hashedPasswordErr != nil {
-		err = session.AbortTransaction(context)
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Canceled),
 			Message: "AccountUseCase Register is failed, password hashing is failed.",
 			Data:    nil,
 		}
-		return result, err
+		return result, session.AbortTransaction(context)
 	}
 
 	currentTime := null.NewTime(time.Now(), true)
@@ -174,25 +181,22 @@ func (AccountUseCase *AccountUseCase) CreateAccount(context context.Context, req
 		CreatedAt:   timestamppb.New(currentTime.Time),
 		UpdatedAt:   timestamppb.New(currentTime.Time),
 	}
-
 	createdAccount, err := AccountUseCase.AccountRepository.CreateAccount(AccountUseCase.DatabaseConfig.AccountDB.Connection, newAccount)
 	if err != nil {
-		rollback := session.AbortTransaction(context)
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
 			Message: "AccountUseCase Register is failed, query to db fail, " + err.Error(),
 			Data:    nil,
 		}
-		return result, rollback
+		return result, session.AbortTransaction(context)
 	}
 
-	commit := session.CommitTransaction(context)
 	result = &pb.AccountResponse{
 		Code:    int64(codes.OK),
 		Message: "AccountUseCase Register is succeed.",
 		Data:    createdAccount,
 	}
-	return result, commit
+	return result, session.CommitTransaction(context)
 }
 func (AccountUseCase *AccountUseCase) DeleteAccount(context context.Context, id *pb.ById) (result *pb.AccountResponse, err error) {
 	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
