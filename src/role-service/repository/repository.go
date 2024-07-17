@@ -116,6 +116,7 @@ func (RoleRepository *RoleRepository) DeleteRole(begin *mongo.Client, id string)
 	}
 	result = &pb.Role{
 		RoleName:  foundRole.RoleName,
+		RoleCode:  foundRole.RoleCode,
 		CreatedAt: foundRole.CreatedAt,
 		UpdatedAt: foundRole.UpdatedAt,
 	}
