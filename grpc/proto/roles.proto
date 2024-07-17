@@ -1,0 +1,40 @@
+syntax = "proto3";
+package  assesement_test_MicroServices;
+
+import "google/protobuf/timestamp.proto";
+import "commons.proto";
+option go_package = "pb/";
+
+
+service RoleService{
+  rpc GetRoleById(ById) returns (RoleResponse);
+  rpc UpdateRole(UpdateRoleRequest) returns (RoleResponse);
+  rpc CreateRole(CreateRoleRequest) returns (RoleResponse);
+  rpc DeleteRole(ById) returns (RoleResponse);
+  rpc ListRoles(empty) returns (RoleResponseRepeated);
+}
+
+message Role {
+  string rolecode = 1;
+  string rolename = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+message RoleResponse{
+  int64 code=1;
+  string message=2;
+  Role data=3;
+}
+message RoleResponseRepeated{
+  int64 code=1;
+  string message=2;
+  repeated Role data=3;
+}
+message UpdateRoleRequest{
+  string id=1;
+  optional string name=2;
+}
+message CreateRoleRequest{
+  string name=1;
+}

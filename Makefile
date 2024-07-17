@@ -2,8 +2,8 @@
 start-gateway:
 	clear && go run src/gateway-service/cmd/web/main.go
 
-start-account-employee:
-	clear && go run src/account-employee-service/cmd/web/main.go
+start-role:
+	clear && go run src/role-service/cmd/web/main.go
 
 start-product:
 	clear && go run src/product-service/cmd/web/main.go
