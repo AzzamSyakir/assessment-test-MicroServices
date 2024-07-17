@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/guregu/null"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -99,7 +100,6 @@ func (RoleUseCase *RoleUseCase) UpdateRole(context context.Context, request *pb.
 		}
 		return result, nil
 	}
-
 	foundRole, err := RoleUseCase.RoleRepository.GetRoleById(begin, request.Id)
 	if err != nil {
 		result = &pb.RoleResponse{
@@ -120,7 +120,7 @@ func (RoleUseCase *RoleUseCase) UpdateRole(context context.Context, request *pb.
 	if request.RoleName != nil {
 		foundRole.RoleName = *request.RoleName
 	}
-
+	foundRole.RoleCode = uuid.NewString()
 	time := time.Now()
 	foundRole.UpdatedAt = timestamppb.New(time)
 	patchedRole, err := RoleUseCase.RoleRepository.PatchOneById(begin, request.Id, foundRole)

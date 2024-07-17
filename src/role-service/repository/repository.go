@@ -74,7 +74,8 @@ func (RoleRepository *RoleRepository) PatchOneById(begin *mongo.Client, id strin
 	filter := bson.D{{Key: "_id", Value: objID}}
 	update := bson.D{
 		{Key: "$set", Value: bson.D{
-			{Key: "account_name", Value: toPatchRole.RoleName},
+			{Key: "role_name", Value: toPatchRole.RoleName},
+			{Key: "role_code", Value: toPatchRole.RoleCode},
 			{Key: "created_at", Value: toPatchRole.CreatedAt},
 			{Key: "updated_at", Value: toPatchRole.UpdatedAt},
 		},
