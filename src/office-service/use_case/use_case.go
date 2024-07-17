@@ -112,7 +112,7 @@ func (OfficeUseCase *OfficeUseCase) UpdateOffice(context context.Context, reques
 	if foundOffice == nil {
 		result = &pb.OfficeResponse{
 			Code:    int64(codes.Canceled),
-			Message: "OfficeOfficeCase UpdateOffice is failed, Office is not found by id " + request.Id,
+			Message: "OfficeUseCase UpdateOffice is failed, Office is not found by id " + request.Id,
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
@@ -134,7 +134,7 @@ func (OfficeUseCase *OfficeUseCase) UpdateOffice(context context.Context, reques
 	}
 	result = &pb.OfficeResponse{
 		Code:    int64(codes.OK),
-		Message: "OfficeOfficeCase UpdateOffice is succeed.",
+		Message: "OfficeUseCase UpdateOffice is succeed.",
 		Data:    patchedOffice,
 	}
 	return result, session.CommitTransaction(context)
@@ -207,7 +207,7 @@ func (OfficeUseCase *OfficeUseCase) DeleteOffice(context context.Context, id *pb
 		err = session.AbortTransaction(context)
 		result = &pb.OfficeResponse{
 			Code:    int64(codes.Internal),
-			Message: "OfficeOfficeCase DeleteOffice is failed, " + deletedOfficeErr.Error(),
+			Message: "OfficeUseCase DeleteOffice is failed, " + deletedOfficeErr.Error(),
 			Data:    nil,
 		}
 		return result, err
@@ -216,7 +216,7 @@ func (OfficeUseCase *OfficeUseCase) DeleteOffice(context context.Context, id *pb
 		err = session.AbortTransaction(context)
 		result = &pb.OfficeResponse{
 			Code:    int64(codes.Canceled),
-			Message: "OfficeOfficeCase DeleteOffice is failed, Office is not deleted by id, " + id.Id,
+			Message: "OfficeUseCase DeleteOffice is failed, Office is not deleted by id, " + id.Id,
 			Data:    nil,
 		}
 		return result, err
@@ -225,7 +225,7 @@ func (OfficeUseCase *OfficeUseCase) DeleteOffice(context context.Context, id *pb
 	err = session.CommitTransaction(context)
 	result = &pb.OfficeResponse{
 		Code:    int64(codes.OK),
-		Message: "OfficeOfficeCase DeleteOffice is succeed.",
+		Message: "OfficeUseCase DeleteOffice is succeed.",
 		Data:    deletedOffice,
 	}
 	return result, err

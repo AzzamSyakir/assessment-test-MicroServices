@@ -25,7 +25,7 @@ func (OfficeRepository *OfficeRepository) CreateOffice(begin *mongo.Client, toCr
 	db := begin.Database("db")
 	createAcc := bson.D{
 		{Key: "branch_name", Value: toCreateOffice.BranchName},
-		{Key: "_code", Value: toCreateOffice.BranchCode},
+		{Key: "branch_code", Value: toCreateOffice.BranchCode},
 		{Key: "created_at", Value: toCreateOffice.CreatedAt},
 		{Key: "updated_at", Value: toCreateOffice.UpdatedAt},
 	}
@@ -77,7 +77,7 @@ func (OfficeRepository *OfficeRepository) PatchOneById(begin *mongo.Client, id s
 	update := bson.D{
 		{Key: "$set", Value: bson.D{
 			{Key: "branch_name", Value: toPatchOffice.BranchName},
-			{Key: "_code", Value: toPatchOffice.BranchCode},
+			{Key: "branch_code", Value: toPatchOffice.BranchCode},
 			{Key: "created_at", Value: toPatchOffice.CreatedAt},
 			{Key: "updated_at", Value: toPatchOffice.UpdatedAt},
 		},
