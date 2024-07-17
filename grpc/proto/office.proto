@@ -15,11 +15,10 @@ service OfficeService{
 }
 
 message Office {
-  string id = 1;
-  string BranchCode = 2;
-  string BranchName = 3;
-  google.protobuf.Timestamp created_at = 4;
-  google.protobuf.Timestamp updated_at = 5;
+  string BranchCode = 1;
+  string BranchName = 2;
+  google.protobuf.Timestamp CreatedAt = 3;
+  google.protobuf.Timestamp UpdatedAt = 4;
 }
 
 message OfficeResponse{
