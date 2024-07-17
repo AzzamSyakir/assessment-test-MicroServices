@@ -1,0 +1,41 @@
+syntax = "proto3";
+package  assesement_test_MicroServices;
+
+import "google/protobuf/timestamp.proto";
+import "commons.proto";
+option go_package = "pb/";
+
+
+service ScreenService{
+  rpc GetScreenById(ById) returns (ScreenResponse);
+  rpc UpdateScreen(UpdateScreenRequest) returns (ScreenResponse);
+  rpc CreateScreen(CreateScreenRequest) returns (ScreenResponse);
+  rpc DeleteScreen(ById) returns (ScreenResponse);
+  rpc ListScreens(empty) returns (ScreenResponseRepeated);
+}
+
+message Screen {
+  string id = 1;
+  string screencode = 2;
+  string screenname = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message ScreenResponse{
+  int64 code=1;
+  string message=2;
+  Screen data=3;
+}
+message ScreenResponseRepeated{
+  int64 code=1;
+  string message=2;
+  repeated Screen data=3;
+}
+message UpdateScreenRequest{
+  string id=1;
+  optional string name=2;
+}
+message CreateScreenRequest{
+  string name=1;
+}

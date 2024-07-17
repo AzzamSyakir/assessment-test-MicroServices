@@ -1,0 +1,44 @@
+syntax = "proto3";
+package  assesement_test_MicroServices;
+
+import "google/protobuf/timestamp.proto";
+import "commons.proto";
+option go_package = "pb/";
+
+
+service UserService{
+  rpc GetUserById(ById) returns (UserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
+  rpc CreateUser(CreateUserRequest) returns (UserResponse);
+  rpc DeleteUser(ById) returns (UserResponse);
+  rpc ListUsers(empty) returns (UserResponseRepeated);
+}
+
+message User {
+  string id = 1;
+  string username = 2;
+  string address = 3;
+  string postcode = 4;
+  string province = 5;
+  string city = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message UserResponse{
+  int64 code=1;
+  string message=2;
+  User data=3;
+}
+message UserResponseRepeated{
+  int64 code=1;
+  string message=2;
+  repeated User data=3;
+}
+message UpdateUserRequest{
+  string id=1;
+  optional string name=2;
+}
+message CreateUserRequest{
+  string name=1;
+}

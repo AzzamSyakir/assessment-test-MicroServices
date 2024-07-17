@@ -1,0 +1,44 @@
+syntax = "proto3";
+package  assesement_test_MicroServices;
+
+import "google/protobuf/timestamp.proto";
+import "commons.proto";
+
+option go_package = "pb/";
+
+
+service AccountService{
+  rpc GetAccountById(ById) returns (AccountResponse);
+  rpc UpdateAccount(UpdateAccountRequest) returns (AccountResponse);
+  rpc CreateAccount(CreateAccountRequest) returns (AccountResponse);
+  rpc DeleteAccount(ById) returns (AccountResponse);
+  rpc ListAccounts(empty) returns (AccountResponseRepeated);
+}
+
+message Account {
+  string AccountName = 2 ;
+  string password = 3;
+  google.protobuf.Timestamp CreatedAt = 4;
+  google.protobuf.Timestamp UpdatedAt = 5;
+}
+
+
+message AccountResponse{
+  int64 code=1;
+  string message=2;
+  Account data=3;
+}
+message AccountResponseRepeated{
+  int64 code=1;
+  string message=2;
+  repeated Account data=3;
+}
+message UpdateAccountRequest{
+  string id=1;
+  optional string name=2;
+  optional string password=3;
+}
+message CreateAccountRequest{
+  string name=1;
+  string password=2;
+}
