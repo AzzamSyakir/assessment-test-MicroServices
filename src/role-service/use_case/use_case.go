@@ -249,7 +249,7 @@ func (RoleUseCase *RoleUseCase) ListRoles(context context.Context, empty *pb.Emp
 		}
 		return result, nil
 	}
-	ListRole, err := RoleUseCase.RoleRepository.ListRole(RoleUseCase.DatabaseConfig.RoleDB.Connection)
+	ListRole, err := RoleUseCase.RoleRepository.ListRoles(RoleUseCase.DatabaseConfig.RoleDB.Connection)
 	if err != nil {
 		rollback := session.AbortTransaction(context)
 		errorMessage := fmt.Sprintf("RoleUseCase ListRole is failed, query failed : %s", err)

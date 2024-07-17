@@ -124,7 +124,7 @@ func (RoleRepository *RoleRepository) DeleteRole(begin *mongo.Client, id string)
 	return result, err
 }
 
-func (RoleRepository *RoleRepository) ListRole(begin *mongo.Client) (result *pb.RoleResponseRepeated, err error) {
+func (RoleRepository *RoleRepository) ListRoles(begin *mongo.Client) (result *pb.RoleResponseRepeated, err error) {
 	db := begin.Database("db")
 	findOptions := options.Find()
 	cursor, cursorErr := db.Collection("roles").Find(context.TODO(), bson.D{{}}, findOptions)
@@ -133,29 +133,30 @@ func (RoleRepository *RoleRepository) ListRole(begin *mongo.Client) (result *pb.
 		err = cursorErr
 		return result, err
 	}
-	var ListRolesPb []*pb.Role
+	var ListRolessPb []*pb.Role
 	var createdAt, updatedAt null.Time
 
 	for cursor.Next(context.TODO()) {
-		ListRole := &model.Role{}
-		scanErr := cursor.Decode(&ListRole)
-		ListRole.CreatedAt = timestamppb.New(createdAt.Time)
-		ListRole.UpdatedAt = timestamppb.New(updatedAt.Time)
+		ListRoles := &model.Role{}
+		scanErr := cursor.Decode(&ListRoles)
+		ListRoles.CreatedAt = timestamppb.New(createdAt.Time)
+		ListRoles.UpdatedAt = timestamppb.New(updatedAt.Time)
 		if scanErr != nil {
 			result = nil
 			err = scanErr
 			return result, err
 		}
-		ListRolePb := &pb.Role{
-			RoleName:  ListRole.RoleName,
-			CreatedAt: ListRole.CreatedAt,
-			UpdatedAt: ListRole.UpdatedAt,
+		ListRolesPb := &pb.Role{
+			RoleName:  ListRoles.RoleName,
+			RoleCode:  ListRoles.RoleCode,
+			CreatedAt: ListRoles.CreatedAt,
+			UpdatedAt: ListRoles.UpdatedAt,
 		}
-		ListRolesPb = append(ListRolesPb, ListRolePb)
+		ListRolessPb = append(ListRolessPb, ListRolesPb)
 	}
 
 	result = &pb.RoleResponseRepeated{
-		Data: ListRolesPb,
+		Data: ListRolessPb,
 	}
 	err = nil
 	return result, err
