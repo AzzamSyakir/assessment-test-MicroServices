@@ -5,15 +5,15 @@ import (
 )
 
 type RepositoryContainer struct {
-	Account *repository.AccountRepository
+	Role *repository.RoleRepository
 }
 
 func NewRepositoryContainer(
-	Account *repository.AccountRepository,
+	Role *repository.RoleRepository,
 
 ) *RepositoryContainer {
 	repositoryContainer := &RepositoryContainer{
-		Account: Account,
+		Role: Role,
 	}
 	return repositoryContainer
 }

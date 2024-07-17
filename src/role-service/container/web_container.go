@@ -13,7 +13,7 @@ import (
 
 type WebContainer struct {
 	Env        *config.EnvConfig
-	AccountDB  *config.DatabaseConfig
+	RoleDB     *config.DatabaseConfig
 	Repository *RepositoryContainer
 	UseCase    *UseCaseContainer
 	Grpc       *grpc.Server
@@ -26,19 +26,19 @@ func NewWebContainer() *WebContainer {
 	}
 
 	envConfig := config.NewEnvConfig()
-	AccountDBConfig := config.NewDBConfig(envConfig)
+	RoleDBConfig := config.NewDBConfig(envConfig)
 
-	AccountRepository := repository.NewAccountRepository()
-	repositoryContainer := NewRepositoryContainer(AccountRepository)
+	RoleRepository := repository.NewRoleRepository()
+	repositoryContainer := NewRepositoryContainer(RoleRepository)
 
-	AccountUseCase := use_case.NewAccountUseCase(AccountDBConfig, AccountRepository)
+	RoleUseCase := use_case.NewRoleUseCase(RoleDBConfig, RoleRepository)
 	grpcServer := grpc.NewServer()
-	pb.RegisterAccountServiceServer(grpcServer, AccountUseCase)
+	pb.RegisterRoleServiceServer(grpcServer, RoleUseCase)
 
-	useCaseContainer := NewUseCaseContainer(AccountUseCase)
+	useCaseContainer := NewUseCaseContainer(RoleUseCase)
 	webContainer := &WebContainer{
 		Env:        envConfig,
-		AccountDB:  AccountDBConfig,
+		RoleDB:     RoleDBConfig,
 		Repository: repositoryContainer,
 		UseCase:    useCaseContainer,
 		Grpc:       grpcServer,

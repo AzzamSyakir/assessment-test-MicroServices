@@ -12,26 +12,26 @@ type AppEnv struct {
 type MongoEnv struct {
 	Host     string
 	Port     string
-	Account  string
+	Role     string
 	Password string
 	Database string
 }
 
 type EnvConfig struct {
-	App       *AppEnv
-	AccountDB *MongoEnv
+	App    *AppEnv
+	RoleDB *MongoEnv
 }
 
 func NewEnvConfig() *EnvConfig {
 	envConfig := &EnvConfig{
 		App: &AppEnv{
 			Host: os.Getenv("GATEWAY_APP_HOST"),
-			Port: os.Getenv("Account_SERVICES_PORT"),
+			Port: os.Getenv("ROLE_SERVICES_PORT"),
 		},
-		AccountDB: &MongoEnv{
+		RoleDB: &MongoEnv{
 			Host:     os.Getenv("MONGO_HOST"),
 			Port:     os.Getenv("MONGO_PORT"),
-			Account:  os.Getenv("MONGO_USER"),
+			Role:     os.Getenv("MONGO_USER"),
 			Password: os.Getenv("MONGO_PASSWORD"),
 			Database: "db",
 		},

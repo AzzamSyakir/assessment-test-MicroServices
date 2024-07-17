@@ -9,7 +9,7 @@ import (
 )
 
 type DatabaseConfig struct {
-	AccountDB *mongoDB
+	RoleDB *mongoDB
 }
 
 type mongoDB struct {
@@ -18,29 +18,29 @@ type mongoDB struct {
 
 func NewDBConfig(envConfig *EnvConfig) *DatabaseConfig {
 	databaseConfig := &DatabaseConfig{
-		AccountDB: NewDB(envConfig),
+		RoleDB: NewDB(envConfig),
 	}
 	return databaseConfig
 }
 
 func NewDB(envConfig *EnvConfig) *mongoDB {
 	var uri string
-	if envConfig.AccountDB.Password == "" {
+	if envConfig.RoleDB.Password == "" {
 		uri = fmt.Sprintf(
 			"mongodb://%s@%s:%s/%s",
-			envConfig.AccountDB.Account,
-			envConfig.AccountDB.Host,
-			envConfig.AccountDB.Port,
-			envConfig.AccountDB.Database,
+			envConfig.RoleDB.Role,
+			envConfig.RoleDB.Host,
+			envConfig.RoleDB.Port,
+			envConfig.RoleDB.Database,
 		)
 	} else {
 		uri = fmt.Sprintf(
 			"mongodb://%s:%s@%s:%s/%s",
-			envConfig.AccountDB.Account,
-			envConfig.AccountDB.Password,
-			envConfig.AccountDB.Host,
-			envConfig.AccountDB.Port,
-			envConfig.AccountDB.Database,
+			envConfig.RoleDB.Role,
+			envConfig.RoleDB.Password,
+			envConfig.RoleDB.Host,
+			envConfig.RoleDB.Port,
+			envConfig.RoleDB.Database,
 		)
 	}
 
@@ -50,8 +50,8 @@ func NewDB(envConfig *EnvConfig) *mongoDB {
 		panic(err)
 	}
 
-	AccountDB := &mongoDB{
+	RoleDB := &mongoDB{
 		Connection: connection,
 	}
-	return AccountDB
+	return RoleDB
 }
