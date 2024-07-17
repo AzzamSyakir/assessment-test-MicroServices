@@ -162,6 +162,7 @@ func (RoleUseCase *RoleUseCase) CreateRole(context context.Context, request *pb.
 	currentTime := null.NewTime(time.Now(), true)
 	newRole := &pb.Role{
 		RoleName:  request.RoleName,
+		RoleCode:  uuid.NewString(),
 		CreatedAt: timestamppb.New(currentTime.Time),
 		UpdatedAt: timestamppb.New(currentTime.Time),
 	}

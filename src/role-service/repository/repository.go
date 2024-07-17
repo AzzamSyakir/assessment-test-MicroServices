@@ -24,7 +24,8 @@ func NewRoleRepository() *RoleRepository {
 func (RoleRepository *RoleRepository) CreateRole(begin *mongo.Client, toCreateRole *pb.Role) (result *pb.Role, err error) {
 	db := begin.Database("db")
 	createAcc := bson.D{
-		{Key: "account_name", Value: toCreateRole.RoleName},
+		{Key: "role_name", Value: toCreateRole.RoleName},
+		{Key: "role_code", Value: toCreateRole.RoleCode},
 		{Key: "created_at", Value: toCreateRole.CreatedAt},
 		{Key: "updated_at", Value: toCreateRole.UpdatedAt},
 	}
