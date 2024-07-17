@@ -16,8 +16,8 @@ service ScreenService{
 
 message Screen {
   string id = 1;
-  string screencode = 2;
-  string screenname = 3;
+  string screenCode = 2;
+  string ScreenName = 3;
   google.protobuf.Timestamp created_at = 4;
   google.protobuf.Timestamp updated_at = 5;
 }
@@ -34,8 +34,8 @@ message ScreenResponseRepeated{
 }
 message UpdateScreenRequest{
   string id=1;
-  optional string name=2;
+  optional string ScreenName=2;
 }
 message CreateScreenRequest{
-  string name=1;
+  string ScreenName=1;
 }
