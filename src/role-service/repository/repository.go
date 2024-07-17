@@ -13,21 +13,21 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type AccountRepository struct {
+type RoleRepository struct {
 }
 
-func NewAccountRepository() *AccountRepository {
-	AccountRepository := &AccountRepository{}
-	return AccountRepository
+func NewRoleRepository() *RoleRepository {
+	RoleRepository := &RoleRepository{}
+	return RoleRepository
 }
 
-func (AccountRepository *AccountRepository) CreateAccount(begin *mongo.Client, toCreateAccount *pb.Account) (result *pb.Account, err error) {
+func (RoleRepository *RoleRepository) CreateRole(begin *mongo.Client, toCreateRole *pb.Role) (result *pb.Role, err error) {
 	db := begin.Database("db")
 	createAcc := bson.D{
-		{Key: "account_name", Value: toCreateAccount.AccountName},
-		{Key: "password", Value: toCreateAccount.Password},
-		{Key: "created_at", Value: toCreateAccount.CreatedAt},
-		{Key: "updated_at", Value: toCreateAccount.UpdatedAt},
+		{Key: "role_name", Value: toCreateRole.RoleName},
+		{Key: "role_code", Value: toCreateRole.RoleCode},
+		{Key: "created_at", Value: toCreateRole.CreatedAt},
+		{Key: "updated_at", Value: toCreateRole.UpdatedAt},
 	}
 	_, queryErr := db.Collection("roles").InsertOne(context.TODO(), createAcc)
 	if queryErr != nil {
@@ -36,13 +36,13 @@ func (AccountRepository *AccountRepository) CreateAccount(begin *mongo.Client, t
 		return
 	}
 
-	result = toCreateAccount
+	result = toCreateRole
 	err = nil
 	return result, err
 }
 
-func (AccountRepository *AccountRepository) GetAccountById(begin *mongo.Client, id string) (result *pb.Account, err error) {
-	var foundAccount model.Account
+func (RoleRepository *RoleRepository) GetRoleById(begin *mongo.Client, id string) (result *pb.Role, err error) {
+	var foundRole model.Role
 	db := begin.Database("db")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -50,22 +50,22 @@ func (AccountRepository *AccountRepository) GetAccountById(begin *mongo.Client, 
 		err = objErr
 		return result, err
 	}
-	queryErr := db.Collection("roles").FindOne(context.Background(), bson.D{{Key: "_id", Value: objID}}).Decode(&foundAccount)
+	queryErr := db.Collection("roles").FindOne(context.Background(), bson.D{{Key: "_id", Value: objID}}).Decode(&foundRole)
 	if queryErr != nil {
 		result = nil
 		err = queryErr
 		return result, err
 	}
-	result = &pb.Account{
-		AccountName: foundAccount.AccountName,
-		Password:    foundAccount.Password,
-		CreatedAt:   foundAccount.CreatedAt,
-		UpdatedAt:   foundAccount.UpdatedAt,
+	result = &pb.Role{
+		RoleName:  foundRole.RoleName,
+		RoleCode:  foundRole.RoleCode,
+		CreatedAt: foundRole.CreatedAt,
+		UpdatedAt: foundRole.UpdatedAt,
 	}
 	err = nil
 	return result, err
 }
-func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id string, toPatchAccount *pb.Account) (result *pb.Account, err error) {
+func (RoleRepository *RoleRepository) PatchOneById(begin *mongo.Client, id string, toPatchRole *pb.Role) (result *pb.Role, err error) {
 	db := begin.Database("db")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -76,10 +76,10 @@ func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id
 	filter := bson.D{{Key: "_id", Value: objID}}
 	update := bson.D{
 		{Key: "$set", Value: bson.D{
-			{Key: "account_name", Value: toPatchAccount.AccountName},
-			{Key: "password", Value: toPatchAccount.Password},
-			{Key: "created_at", Value: toPatchAccount.CreatedAt},
-			{Key: "updated_at", Value: toPatchAccount.UpdatedAt},
+			{Key: "role_name", Value: toPatchRole.RoleName},
+			{Key: "role_code", Value: toPatchRole.RoleCode},
+			{Key: "created_at", Value: toPatchRole.CreatedAt},
+			{Key: "updated_at", Value: toPatchRole.UpdatedAt},
 		},
 		},
 	}
@@ -89,14 +89,14 @@ func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id
 		err = queryErr
 		return
 	}
-	result = toPatchAccount
+	result = toPatchRole
 	err = nil
 	return result, err
 }
 
-func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, id string) (result *pb.Account, err error) {
+func (RoleRepository *RoleRepository) DeleteRole(begin *mongo.Client, id string) (result *pb.Role, err error) {
 	db := begin.Database("db")
-	var foundAccount model.Account
+	var foundRole model.Role
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -104,7 +104,7 @@ func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, i
 		return
 	}
 	filter := bson.D{{Key: "_id", Value: objID}}
-	queryErr := db.Collection("roles").FindOne(context.Background(), filter).Decode(&foundAccount)
+	queryErr := db.Collection("roles").FindOne(context.Background(), filter).Decode(&foundRole)
 	if queryErr != nil {
 		result = nil
 		err = queryErr
@@ -114,17 +114,17 @@ func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, i
 	if deleteError != nil {
 		return nil, err
 	}
-	result = &pb.Account{
-		AccountName: foundAccount.AccountName,
-		Password:    foundAccount.Password,
-		CreatedAt:   foundAccount.CreatedAt,
-		UpdatedAt:   foundAccount.UpdatedAt,
+	result = &pb.Role{
+		RoleName:  foundRole.RoleName,
+		RoleCode:  foundRole.RoleCode,
+		CreatedAt: foundRole.CreatedAt,
+		UpdatedAt: foundRole.UpdatedAt,
 	}
 	err = nil
 	return result, err
 }
 
-func (AccountRepository *AccountRepository) ListAccount(begin *mongo.Client) (result *pb.AccountResponseRepeated, err error) {
+func (RoleRepository *RoleRepository) ListRoles(begin *mongo.Client) (result *pb.RoleResponseRepeated, err error) {
 	db := begin.Database("db")
 	findOptions := options.Find()
 	cursor, cursorErr := db.Collection("roles").Find(context.TODO(), bson.D{{}}, findOptions)
@@ -133,30 +133,30 @@ func (AccountRepository *AccountRepository) ListAccount(begin *mongo.Client) (re
 		err = cursorErr
 		return result, err
 	}
-	var ListAccountsPb []*pb.Account
+	var ListRolessPb []*pb.Role
 	var createdAt, updatedAt null.Time
 
 	for cursor.Next(context.TODO()) {
-		ListAccount := &model.Account{}
-		scanErr := cursor.Decode(&ListAccount)
-		ListAccount.CreatedAt = timestamppb.New(createdAt.Time)
-		ListAccount.UpdatedAt = timestamppb.New(updatedAt.Time)
+		ListRoles := &model.Role{}
+		scanErr := cursor.Decode(&ListRoles)
+		ListRoles.CreatedAt = timestamppb.New(createdAt.Time)
+		ListRoles.UpdatedAt = timestamppb.New(updatedAt.Time)
 		if scanErr != nil {
 			result = nil
 			err = scanErr
 			return result, err
 		}
-		ListAccountPb := &pb.Account{
-			AccountName: ListAccount.AccountName,
-			Password:    ListAccount.Password,
-			CreatedAt:   ListAccount.CreatedAt,
-			UpdatedAt:   ListAccount.UpdatedAt,
+		ListRolesPb := &pb.Role{
+			RoleName:  ListRoles.RoleName,
+			RoleCode:  ListRoles.RoleCode,
+			CreatedAt: ListRoles.CreatedAt,
+			UpdatedAt: ListRoles.UpdatedAt,
 		}
-		ListAccountsPb = append(ListAccountsPb, ListAccountPb)
+		ListRolessPb = append(ListRolessPb, ListRolesPb)
 	}
 
-	result = &pb.AccountResponseRepeated{
-		Data: ListAccountsPb,
+	result = &pb.RoleResponseRepeated{
+		Data: ListRolessPb,
 	}
 	err = nil
 	return result, err

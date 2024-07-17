@@ -36,7 +36,7 @@ func (AccountUseCase *AccountUseCase) GetAccountById(context context.Context, id
 	if err != nil {
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase Register is failed, startSession fail," + err.Error(),
+			Message: "AccountUseCase GetAccountById is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
@@ -45,7 +45,7 @@ func (AccountUseCase *AccountUseCase) GetAccountById(context context.Context, id
 	if err != nil {
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase Register is failed, StartTransaction fail," + err.Error(),
+			Message: "AccountUseCase GetAccountById is failed, StartTransaction fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, nil

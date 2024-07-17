@@ -8,63 +8,63 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/guregu/null"
-	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type AccountUseCase struct {
-	pb.UnimplementedAccountServiceServer
-	DatabaseConfig    *config.DatabaseConfig
-	AccountRepository *repository.AccountRepository
+type RoleUseCase struct {
+	pb.UnimplementedRoleServiceServer
+	DatabaseConfig *config.DatabaseConfig
+	RoleRepository *repository.RoleRepository
 }
 
-func NewAccountUseCase(
+func NewRoleUseCase(
 	databaseConfig *config.DatabaseConfig,
-	AccountRepository *repository.AccountRepository,
-) *AccountUseCase {
-	return &AccountUseCase{
-		UnimplementedAccountServiceServer: pb.UnimplementedAccountServiceServer{},
-		DatabaseConfig:                    databaseConfig,
-		AccountRepository:                 AccountRepository,
+	RoleRepository *repository.RoleRepository,
+) *RoleUseCase {
+	return &RoleUseCase{
+		UnimplementedRoleServiceServer: pb.UnimplementedRoleServiceServer{},
+		DatabaseConfig:                 databaseConfig,
+		RoleRepository:                 RoleRepository,
 	}
 }
 
-func (AccountUseCase *AccountUseCase) GetAccountById(context context.Context, id *pb.ById) (result *pb.AccountResponse, err error) {
-	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
+func (RoleUseCase *RoleUseCase) GetRoleById(context context.Context, id *pb.ById) (result *pb.RoleResponse, err error) {
+	session, err := RoleUseCase.DatabaseConfig.RoleDB.Connection.StartSession()
 	if err != nil {
-		result = &pb.AccountResponse{
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase Register is failed, startSession fail," + err.Error(),
+			Message: "RoleUseCase GetRoleById is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
 	}
 	err = session.StartTransaction()
 	if err != nil {
-		result = &pb.AccountResponse{
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase Register is failed, StartTransaction fail," + err.Error(),
+			Message: "RoleUseCase GetRoleById is failed, StartTransaction fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, nil
 	}
-	GetAccountById, GetAccountByIdErr := AccountUseCase.AccountRepository.GetAccountById(AccountUseCase.DatabaseConfig.AccountDB.Connection, id.Id)
-	if GetAccountByIdErr != nil {
+	GetRoleById, GetRoleByIdErr := RoleUseCase.RoleRepository.GetRoleById(RoleUseCase.DatabaseConfig.RoleDB.Connection, id.Id)
+	if GetRoleByIdErr != nil {
 		rollback := session.AbortTransaction(context)
-		errorMessage := fmt.Sprintf("AccountUseCase GetAccountById is failed, GetAccountById failed : %s", GetAccountByIdErr)
-		result = &pb.AccountResponse{
+		errorMessage := fmt.Sprintf("RoleUseCase GetRoleById is failed, GetRoleById failed : %s", GetRoleByIdErr)
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Canceled),
 			Message: errorMessage,
 			Data:    nil,
 		}
 		return result, rollback
 	}
-	if GetAccountById == nil {
+	if GetRoleById == nil {
 		rollback := session.AbortTransaction(context)
-		errorMessage := fmt.Sprintf("Account UseCase GetOneById is failed, Account is not found by id %s", id)
-		result = &pb.AccountResponse{
+		errorMessage := fmt.Sprintf("Role UseCase GetOneById is failed, Role is not found by id %s", id)
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Canceled),
 			Message: errorMessage,
 			Data:    nil,
@@ -72,211 +72,188 @@ func (AccountUseCase *AccountUseCase) GetAccountById(context context.Context, id
 		return result, rollback
 	}
 	commit := session.CommitTransaction(context)
-	result = &pb.AccountResponse{
+	result = &pb.RoleResponse{
 		Code:    int64(codes.OK),
-		Message: "Account UseCase GetOneById is succeed.",
-		Data:    GetAccountById,
+		Message: "Role UseCase GetOneById is succeed.",
+		Data:    GetRoleById,
 	}
 	return result, commit
 }
 
-func (AccountUseCase *AccountUseCase) UpdateAccount(context context.Context, request *pb.UpdateAccountRequest) (result *pb.AccountResponse, err error) {
-	begin := AccountUseCase.DatabaseConfig.AccountDB.Connection
-	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
+func (RoleUseCase *RoleUseCase) UpdateRole(context context.Context, request *pb.UpdateRoleRequest) (result *pb.RoleResponse, err error) {
+	begin := RoleUseCase.DatabaseConfig.RoleDB.Connection
+	session, err := RoleUseCase.DatabaseConfig.RoleDB.Connection.StartSession()
 	if err != nil {
-		result = &pb.AccountResponse{
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase UpdateAccount is failed, startSession fail," + err.Error(),
+			Message: "RoleUseCase UpdateRole is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
 	}
 	err = session.StartTransaction()
 	if err != nil {
-		result = &pb.AccountResponse{
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase UpdateAccount is failed, StartTransaction fail," + err.Error(),
+			Message: "RoleUseCase UpdateRole is failed, StartTransaction fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, nil
 	}
-
-	foundAccount, err := AccountUseCase.AccountRepository.GetAccountById(begin, request.Id)
+	foundRole, err := RoleUseCase.RoleRepository.GetRoleById(begin, request.Id)
 	if err != nil {
-		result = &pb.AccountResponse{
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Canceled),
-			Message: "AccountUseCase UpdateAccount is failed, query to db fail, " + err.Error(),
+			Message: "RoleUseCase UpdateRole is failed, query to db fail, " + err.Error(),
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
 	}
-	if foundAccount == nil {
-		result = &pb.AccountResponse{
+	if foundRole == nil {
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Canceled),
-			Message: "AccountAccountCase UpdateAccount is failed, Account is not found by id " + request.Id,
+			Message: "RoleRoleCase UpdateRole is failed, Role is not found by id " + request.Id,
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
 	}
-	if request.Name != nil {
-		foundAccount.AccountName = *request.Name
+	if request.RoleName != nil {
+		foundRole.RoleName = *request.RoleName
 	}
-	if request.Password != nil {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(*request.Password), bcrypt.DefaultCost)
-		if err != nil {
-			result = &pb.AccountResponse{
-				Code:    int64(codes.Canceled),
-				Message: "AccountUseCase UpdateAccount is failed, password hashing is failed, " + err.Error(),
-				Data:    nil,
-			}
-			return result, session.AbortTransaction(context)
-		}
-
-		foundAccount.Password = string(hashedPassword)
-	}
+	foundRole.RoleCode = uuid.NewString()
 	time := time.Now()
-	foundAccount.UpdatedAt = timestamppb.New(time)
-	patchedAccount, err := AccountUseCase.AccountRepository.PatchOneById(begin, request.Id, foundAccount)
+	foundRole.UpdatedAt = timestamppb.New(time)
+	patchedRole, err := RoleUseCase.RoleRepository.PatchOneById(begin, request.Id, foundRole)
 	if err != nil {
-		result = &pb.AccountResponse{
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase UpdateAccount is failed, query to db fail, " + err.Error(),
+			Message: "RoleUseCase UpdateRole is failed, query to db fail, " + err.Error(),
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
 	}
-	result = &pb.AccountResponse{
+	result = &pb.RoleResponse{
 		Code:    int64(codes.OK),
-		Message: "AccountAccountCase UpdateAccount is succeed.",
-		Data:    patchedAccount,
+		Message: "RoleRoleCase UpdateRole is succeed.",
+		Data:    patchedRole,
 	}
 	return result, session.CommitTransaction(context)
 }
-func (AccountUseCase *AccountUseCase) CreateAccount(context context.Context, request *pb.CreateAccountRequest) (result *pb.AccountResponse, err error) {
-	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
+func (RoleUseCase *RoleUseCase) CreateRole(context context.Context, request *pb.CreateRoleRequest) (result *pb.RoleResponse, err error) {
+	session, err := RoleUseCase.DatabaseConfig.RoleDB.Connection.StartSession()
 	if err != nil {
-		result = &pb.AccountResponse{
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase Register is failed, startSession fail," + err.Error(),
+			Message: "RoleUseCase CreateRole is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
 	}
 	err = session.StartTransaction()
 	if err != nil {
-		result = &pb.AccountResponse{
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase Register is failed, StartTransaction fail," + err.Error(),
+			Message: "RoleUseCase CreateRole is failed, StartTransaction fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, nil
-	}
-
-	hashedPassword, hashedPasswordErr := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
-	if hashedPasswordErr != nil {
-		result = &pb.AccountResponse{
-			Code:    int64(codes.Canceled),
-			Message: "AccountUseCase Register is failed, password hashing is failed.",
-			Data:    nil,
-		}
-		return result, session.AbortTransaction(context)
 	}
 
 	currentTime := null.NewTime(time.Now(), true)
-	newAccount := &pb.Account{
-		AccountName: request.Name,
-		Password:    string(hashedPassword),
-		CreatedAt:   timestamppb.New(currentTime.Time),
-		UpdatedAt:   timestamppb.New(currentTime.Time),
+	newRole := &pb.Role{
+		RoleName:  request.RoleName,
+		RoleCode:  uuid.NewString(),
+		CreatedAt: timestamppb.New(currentTime.Time),
+		UpdatedAt: timestamppb.New(currentTime.Time),
 	}
-	createdAccount, err := AccountUseCase.AccountRepository.CreateAccount(AccountUseCase.DatabaseConfig.AccountDB.Connection, newAccount)
+	createdRole, err := RoleUseCase.RoleRepository.CreateRole(RoleUseCase.DatabaseConfig.RoleDB.Connection, newRole)
 	if err != nil {
-		result = &pb.AccountResponse{
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase Register is failed, query to db fail, " + err.Error(),
+			Message: "RoleUseCase Register is failed, query to db fail, " + err.Error(),
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
 	}
 
-	result = &pb.AccountResponse{
+	result = &pb.RoleResponse{
 		Code:    int64(codes.OK),
-		Message: "AccountUseCase Register is succeed.",
-		Data:    createdAccount,
+		Message: "RoleUseCase Register is succeed.",
+		Data:    createdRole,
 	}
 	return result, session.CommitTransaction(context)
 }
-func (AccountUseCase *AccountUseCase) DeleteAccount(context context.Context, id *pb.ById) (result *pb.AccountResponse, err error) {
-	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
+func (RoleUseCase *RoleUseCase) DeleteRole(context context.Context, id *pb.ById) (result *pb.RoleResponse, err error) {
+	session, err := RoleUseCase.DatabaseConfig.RoleDB.Connection.StartSession()
 	if err != nil {
-		result = &pb.AccountResponse{
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase DeleteAccount is failed, startSession fail," + err.Error(),
+			Message: "RoleUseCase DeleteRole is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
 	}
 	err = session.StartTransaction()
 	if err != nil {
-		result = &pb.AccountResponse{
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase DeleteAccount is failed, StartTransaction fail," + err.Error(),
+			Message: "RoleUseCase DeleteRole is failed, StartTransaction fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, nil
 	}
-	deletedAccount, deletedAccountErr := AccountUseCase.AccountRepository.DeleteAccount(AccountUseCase.DatabaseConfig.AccountDB.Connection, id.Id)
-	if deletedAccountErr != nil {
+	deletedRole, deletedRoleErr := RoleUseCase.RoleRepository.DeleteRole(RoleUseCase.DatabaseConfig.RoleDB.Connection, id.Id)
+	if deletedRoleErr != nil {
 		err = session.AbortTransaction(context)
-		result = &pb.AccountResponse{
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountAccountCase DeleteAccount is failed, " + deletedAccountErr.Error(),
+			Message: "RoleRoleCase DeleteRole is failed, " + deletedRoleErr.Error(),
 			Data:    nil,
 		}
 		return result, err
 	}
-	if deletedAccount == nil {
+	if deletedRole == nil {
 		err = session.AbortTransaction(context)
-		result = &pb.AccountResponse{
+		result = &pb.RoleResponse{
 			Code:    int64(codes.Canceled),
-			Message: "AccountAccountCase DeleteAccount is failed, Account is not deleted by id, " + id.Id,
+			Message: "RoleRoleCase DeleteRole is failed, Role is not deleted by id, " + id.Id,
 			Data:    nil,
 		}
 		return result, err
 	}
 
 	err = session.CommitTransaction(context)
-	result = &pb.AccountResponse{
+	result = &pb.RoleResponse{
 		Code:    int64(codes.OK),
-		Message: "AccountAccountCase DeleteAccount is succeed.",
-		Data:    deletedAccount,
+		Message: "RoleRoleCase DeleteRole is succeed.",
+		Data:    deletedRole,
 	}
 	return result, err
 }
-func (AccountUseCase *AccountUseCase) ListAccounts(context context.Context, empty *pb.Empty) (result *pb.AccountResponseRepeated, err error) {
-	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
+func (RoleUseCase *RoleUseCase) ListRoles(context context.Context, empty *pb.Empty) (result *pb.RoleResponseRepeated, err error) {
+	session, err := RoleUseCase.DatabaseConfig.RoleDB.Connection.StartSession()
 	if err != nil {
-		result = &pb.AccountResponseRepeated{
+		result = &pb.RoleResponseRepeated{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase ListAccount is failed, startSession fail," + err.Error(),
+			Message: "RoleUseCase ListRole is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
 	}
 	err = session.StartTransaction()
 	if err != nil {
-		result = &pb.AccountResponseRepeated{
+		result = &pb.RoleResponseRepeated{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase ListAccount is failed, StartTransaction fail," + err.Error(),
+			Message: "RoleUseCase ListRole is failed, StartTransaction fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, nil
 	}
-	ListAccount, err := AccountUseCase.AccountRepository.ListAccount(AccountUseCase.DatabaseConfig.AccountDB.Connection)
+	ListRole, err := RoleUseCase.RoleRepository.ListRoles(RoleUseCase.DatabaseConfig.RoleDB.Connection)
 	if err != nil {
 		rollback := session.AbortTransaction(context)
-		errorMessage := fmt.Sprintf("AccountUseCase ListAccount is failed, query failed : %s", err)
-		result = &pb.AccountResponseRepeated{
+		errorMessage := fmt.Sprintf("RoleUseCase ListRole is failed, query failed : %s", err)
+		result = &pb.RoleResponseRepeated{
 			Code:    int64(codes.Internal),
 			Message: errorMessage,
 			Data:    nil,
@@ -284,20 +261,20 @@ func (AccountUseCase *AccountUseCase) ListAccounts(context context.Context, empt
 		return result, rollback
 	}
 
-	if ListAccount.Data == nil {
+	if ListRole.Data == nil {
 		rollback := session.AbortTransaction(context)
-		result = &pb.AccountResponseRepeated{
+		result = &pb.RoleResponseRepeated{
 			Code:    int64(codes.Canceled),
-			Message: "Account UseCase ListAccount is failed, data Account is empty ",
+			Message: "Role UseCase ListRole is failed, data Role is empty ",
 			Data:    nil,
 		}
 		return result, rollback
 	}
 	commit := session.CommitTransaction(context)
-	result = &pb.AccountResponseRepeated{
+	result = &pb.RoleResponseRepeated{
 		Code:    int64(codes.OK),
-		Message: "Account UseCase ListAccount is succeed.",
-		Data:    ListAccount.Data,
+		Message: "Role UseCase ListRole is succeed.",
+		Data:    ListRole.Data,
 	}
 	return result, commit
 }

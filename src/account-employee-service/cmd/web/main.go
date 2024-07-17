@@ -21,6 +21,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen %v", err)
 	}
+	fmt.Println("Account-Employee Services listen", address)
+
 	if err := webContainer.Grpc.Serve(netListen); err != nil {
 		log.Fatalf("failed to serve %v", err.Error())
 	}
