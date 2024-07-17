@@ -35,7 +35,7 @@ func (RoleUseCase *RoleUseCase) GetRoleById(context context.Context, id *pb.ById
 	if err != nil {
 		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "RoleUseCase Register is failed, startSession fail," + err.Error(),
+			Message: "RoleUseCase GetRoleById is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
@@ -44,7 +44,7 @@ func (RoleUseCase *RoleUseCase) GetRoleById(context context.Context, id *pb.ById
 	if err != nil {
 		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "RoleUseCase Register is failed, StartTransaction fail," + err.Error(),
+			Message: "RoleUseCase GetRoleById is failed, StartTransaction fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, nil
@@ -144,7 +144,7 @@ func (RoleUseCase *RoleUseCase) CreateRole(context context.Context, request *pb.
 	if err != nil {
 		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "RoleUseCase Register is failed, startSession fail," + err.Error(),
+			Message: "RoleUseCase CreateRole is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
@@ -153,7 +153,7 @@ func (RoleUseCase *RoleUseCase) CreateRole(context context.Context, request *pb.
 	if err != nil {
 		result = &pb.RoleResponse{
 			Code:    int64(codes.Internal),
-			Message: "RoleUseCase Register is failed, StartTransaction fail," + err.Error(),
+			Message: "RoleUseCase CreateRole is failed, StartTransaction fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, nil
