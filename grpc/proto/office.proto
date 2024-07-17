@@ -16,8 +16,8 @@ service OfficeService{
 
 message Office {
   string id = 1;
-  string branchcode = 2;
-  string branchname = 3;
+  string BranchCode = 2;
+  string BranchName = 3;
   google.protobuf.Timestamp created_at = 4;
   google.protobuf.Timestamp updated_at = 5;
 }
@@ -34,8 +34,8 @@ message OfficeResponseRepeated{
 }
 message UpdateOfficeRequest{
   string id=1;
-  optional string name=2;
+  optional string BranchName=2;
 }
 message CreateOfficeRequest{
-  string name=1;
+  string BranchName=1;
 }

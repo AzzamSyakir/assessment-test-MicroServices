@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	fmt.Println("Role Services started.")
+	fmt.Println("Role Service started.")
 
 	webContainer := container.NewWebContainer()
 
@@ -21,10 +21,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen %v", err)
 	}
-	fmt.Println("Role Services listen on", address)
+	fmt.Println("Role Service listen on", address)
 
 	if err := webContainer.Grpc.Serve(netListen); err != nil {
 		log.Fatalf("failed to serve %v", err.Error())
 	}
-	fmt.Println("Role Services finished.")
+	fmt.Println("Role Service finished.")
 }
