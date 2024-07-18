@@ -43,7 +43,7 @@ func NewDB(envConfig *EnvConfig) *mongoDB {
 			envConfig.ScreenDB.Database,
 		)
 	}
-
+	fmt.Println("uri", uri)
 	connection, err := mongo.Connect(context.TODO(), options.Client().
 		ApplyURI(uri))
 	if err != nil {

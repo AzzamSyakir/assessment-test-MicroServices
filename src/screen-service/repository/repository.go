@@ -24,8 +24,8 @@ func NewScreenRepository() *ScreenRepository {
 func (ScreenRepository *ScreenRepository) CreateScreen(begin *mongo.Client, toCreateScreen *pb.Screen) (result *pb.Screen, err error) {
 	db := begin.Database("db")
 	createAcc := bson.D{
-		{Key: "branch_name", Value: toCreateScreen.ScreenName},
-		{Key: "branch_code", Value: toCreateScreen.ScreenCode},
+		{Key: "screen_name", Value: toCreateScreen.ScreenName},
+		{Key: "screen_code", Value: toCreateScreen.ScreenCode},
 		{Key: "created_at", Value: toCreateScreen.CreatedAt},
 		{Key: "updated_at", Value: toCreateScreen.UpdatedAt},
 	}
@@ -76,8 +76,8 @@ func (ScreenRepository *ScreenRepository) PatchOneById(begin *mongo.Client, id s
 	filter := bson.D{{Key: "_id", Value: objID}}
 	update := bson.D{
 		{Key: "$set", Value: bson.D{
-			{Key: "branch_name", Value: toPatchScreen.ScreenName},
-			{Key: "branch_code", Value: toPatchScreen.ScreenCode},
+			{Key: "screen_name", Value: toPatchScreen.ScreenName},
+			{Key: "screen_code", Value: toPatchScreen.ScreenCode},
 			{Key: "created_at", Value: toPatchScreen.CreatedAt},
 			{Key: "updated_at", Value: toPatchScreen.UpdatedAt},
 		},

@@ -24,25 +24,11 @@ func NewDBConfig(envConfig *EnvConfig) *DatabaseConfig {
 }
 
 func NewDB(envConfig *EnvConfig) *mongoDB {
-	var uri string
-	if envConfig.AccountDB.Password == "" {
-		uri = fmt.Sprintf(
-			"mongodb://%s@%s:%s/%s",
-			envConfig.AccountDB.Account,
-			envConfig.AccountDB.Host,
-			envConfig.AccountDB.Port,
-			envConfig.AccountDB.Database,
-		)
-	} else {
-		uri = fmt.Sprintf(
-			"mongodb://%s:%s@%s:%s/%s",
-			envConfig.AccountDB.Account,
-			envConfig.AccountDB.Password,
-			envConfig.AccountDB.Host,
-			envConfig.AccountDB.Port,
-			envConfig.AccountDB.Database,
-		)
-	}
+	uri := fmt.Sprintf(
+		"mongodb://%s:%s",
+		envConfig.AccountDB.Host,
+		envConfig.AccountDB.Port,
+	)
 
 	connection, err := mongo.Connect(context.TODO(), options.Client().
 		ApplyURI(uri))
