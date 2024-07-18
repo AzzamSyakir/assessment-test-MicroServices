@@ -2,7 +2,7 @@ package repository
 
 import (
 	"assesement-test-MicroServices/grpc/pb"
-	"assesement-test-MicroServices/src/office-service/model"
+	"assesement-test-MicroServices/src/gateway-service/entity"
 	"context"
 
 	"github.com/guregu/null"
@@ -42,7 +42,7 @@ func (OfficeRepository *OfficeRepository) CreateOffice(begin *mongo.Client, toCr
 }
 
 func (OfficeRepository *OfficeRepository) GetOfficeById(begin *mongo.Client, id string) (result *pb.Office, err error) {
-	var foundOffice model.Office
+	var foundOffice entity.Office
 	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -96,7 +96,7 @@ func (OfficeRepository *OfficeRepository) PatchOneById(begin *mongo.Client, id s
 
 func (OfficeRepository *OfficeRepository) DeleteOffice(begin *mongo.Client, id string) (result *pb.Office, err error) {
 	db := begin.Database("appDb")
-	var foundOffice model.Office
+	var foundOffice entity.Office
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -137,7 +137,7 @@ func (OfficeRepository *OfficeRepository) ListOffices(begin *mongo.Client) (resu
 	var createdAt, updatedAt null.Time
 
 	for cursor.Next(context.TODO()) {
-		ListOffices := &model.Office{}
+		ListOffices := &entity.Office{}
 		scanErr := cursor.Decode(&ListOffices)
 		ListOffices.CreatedAt = timestamppb.New(createdAt.Time)
 		ListOffices.UpdatedAt = timestamppb.New(updatedAt.Time)
