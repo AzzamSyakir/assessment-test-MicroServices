@@ -2,7 +2,7 @@ package repository
 
 import (
 	"assesement-test-MicroServices/grpc/pb"
-	"assesement-test-MicroServices/src/role-service/model"
+	"assesement-test-MicroServices/src/gateway-service/entity"
 	"context"
 
 	"github.com/guregu/null"
@@ -42,7 +42,7 @@ func (RoleRepository *RoleRepository) CreateRole(begin *mongo.Client, toCreateRo
 }
 
 func (RoleRepository *RoleRepository) GetRoleById(begin *mongo.Client, id string) (result *pb.Role, err error) {
-	var foundRole model.Role
+	var foundRole entity.Role
 	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -96,7 +96,7 @@ func (RoleRepository *RoleRepository) PatchOneById(begin *mongo.Client, id strin
 
 func (RoleRepository *RoleRepository) DeleteRole(begin *mongo.Client, id string) (result *pb.Role, err error) {
 	db := begin.Database("appDb")
-	var foundRole model.Role
+	var foundRole entity.Role
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -137,7 +137,7 @@ func (RoleRepository *RoleRepository) ListRoles(begin *mongo.Client) (result *pb
 	var createdAt, updatedAt null.Time
 
 	for cursor.Next(context.TODO()) {
-		ListRoles := &model.Role{}
+		ListRoles := &entity.Role{}
 		scanErr := cursor.Decode(&ListRoles)
 		ListRoles.CreatedAt = timestamppb.New(createdAt.Time)
 		ListRoles.UpdatedAt = timestamppb.New(updatedAt.Time)
