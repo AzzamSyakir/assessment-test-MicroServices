@@ -2,7 +2,7 @@ package repository
 
 import (
 	"assesement-test-MicroServices/grpc/pb"
-	"assesement-test-MicroServices/src/screen-service/model"
+	"assesement-test-MicroServices/src/gateway-service/entity"
 	"context"
 
 	"github.com/guregu/null"
@@ -42,7 +42,7 @@ func (ScreenRepository *ScreenRepository) CreateScreen(begin *mongo.Client, toCr
 }
 
 func (ScreenRepository *ScreenRepository) GetScreenById(begin *mongo.Client, id string) (result *pb.Screen, err error) {
-	var foundScreen model.Screen
+	var foundScreen entity.Screen
 	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -96,7 +96,7 @@ func (ScreenRepository *ScreenRepository) PatchOneById(begin *mongo.Client, id s
 
 func (ScreenRepository *ScreenRepository) DeleteScreen(begin *mongo.Client, id string) (result *pb.Screen, err error) {
 	db := begin.Database("appDb")
-	var foundScreen model.Screen
+	var foundScreen entity.Screen
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -137,7 +137,7 @@ func (ScreenRepository *ScreenRepository) ListScreens(begin *mongo.Client) (resu
 	var createdAt, updatedAt null.Time
 
 	for cursor.Next(context.TODO()) {
-		ListScreens := &model.Screen{}
+		ListScreens := &entity.Screen{}
 		scanErr := cursor.Decode(&ListScreens)
 		ListScreens.CreatedAt = timestamppb.New(createdAt.Time)
 		ListScreens.UpdatedAt = timestamppb.New(updatedAt.Time)
