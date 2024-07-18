@@ -2,7 +2,7 @@ package repository
 
 import (
 	"assesement-test-MicroServices/grpc/pb"
-	"assesement-test-MicroServices/src/account-employee-service/model"
+	"assesement-test-MicroServices/src/gateway-service/entity"
 	"context"
 
 	"github.com/guregu/null"
@@ -42,7 +42,7 @@ func (AccountRepository *AccountRepository) CreateAccount(begin *mongo.Client, t
 }
 
 func (AccountRepository *AccountRepository) GetAccountById(begin *mongo.Client, id string) (result *pb.Account, err error) {
-	var foundAccount model.Account
+	var foundAccount entity.Account
 	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -96,7 +96,7 @@ func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id
 
 func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, id string) (result *pb.Account, err error) {
 	db := begin.Database("appDb")
-	var foundAccount model.Account
+	var foundAccount entity.Account
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -137,7 +137,7 @@ func (AccountRepository *AccountRepository) ListAccount(begin *mongo.Client) (re
 	var createdAt, updatedAt null.Time
 
 	for cursor.Next(context.TODO()) {
-		ListAccount := &model.Account{}
+		ListAccount := &entity.Account{}
 		scanErr := cursor.Decode(&ListAccount)
 		ListAccount.CreatedAt = timestamppb.New(createdAt.Time)
 		ListAccount.UpdatedAt = timestamppb.New(updatedAt.Time)
