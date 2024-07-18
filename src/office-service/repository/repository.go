@@ -22,7 +22,7 @@ func NewOfficeRepository() *OfficeRepository {
 }
 
 func (OfficeRepository *OfficeRepository) CreateOffice(begin *mongo.Client, toCreateOffice *pb.Office) (result *pb.Office, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	createAcc := bson.D{
 		{Key: "branch_name", Value: toCreateOffice.BranchName},
 		{Key: "branch_code", Value: toCreateOffice.BranchCode},
@@ -43,7 +43,7 @@ func (OfficeRepository *OfficeRepository) CreateOffice(begin *mongo.Client, toCr
 
 func (OfficeRepository *OfficeRepository) GetOfficeById(begin *mongo.Client, id string) (result *pb.Office, err error) {
 	var foundOffice model.Office
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -66,7 +66,7 @@ func (OfficeRepository *OfficeRepository) GetOfficeById(begin *mongo.Client, id 
 	return result, err
 }
 func (OfficeRepository *OfficeRepository) PatchOneById(begin *mongo.Client, id string, toPatchOffice *pb.Office) (result *pb.Office, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -95,7 +95,7 @@ func (OfficeRepository *OfficeRepository) PatchOneById(begin *mongo.Client, id s
 }
 
 func (OfficeRepository *OfficeRepository) DeleteOffice(begin *mongo.Client, id string) (result *pb.Office, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	var foundOffice model.Office
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -125,7 +125,7 @@ func (OfficeRepository *OfficeRepository) DeleteOffice(begin *mongo.Client, id s
 }
 
 func (OfficeRepository *OfficeRepository) ListOffices(begin *mongo.Client) (result *pb.OfficeResponseRepeated, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	findOptions := options.Find()
 	cursor, cursorErr := db.Collection("offices").Find(context.TODO(), bson.D{{}}, findOptions)
 	if cursorErr != nil {
