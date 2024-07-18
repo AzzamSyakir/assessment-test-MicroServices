@@ -8,8 +8,6 @@ import (
 )
 
 func main() {
-	fmt.Println("Screen Service started.")
-
 	webContainer := container.NewWebContainer()
 
 	address := fmt.Sprintf(

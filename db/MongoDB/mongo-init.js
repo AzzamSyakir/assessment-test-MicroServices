@@ -12,7 +12,7 @@ print("Collection 'offices' created");
 db.createCollection("roles");
 print("Collection 'roles' created");
 
-db.createCollection("layers");
+db.createCollection("screens");
 print("Collection 'layers' created");
 
 print("init script finish");

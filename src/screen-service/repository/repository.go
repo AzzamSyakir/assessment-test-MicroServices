@@ -22,7 +22,7 @@ func NewScreenRepository() *ScreenRepository {
 }
 
 func (ScreenRepository *ScreenRepository) CreateScreen(begin *mongo.Client, toCreateScreen *pb.Screen) (result *pb.Screen, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	createAcc := bson.D{
 		{Key: "screen_name", Value: toCreateScreen.ScreenName},
 		{Key: "screen_code", Value: toCreateScreen.ScreenCode},
@@ -43,7 +43,7 @@ func (ScreenRepository *ScreenRepository) CreateScreen(begin *mongo.Client, toCr
 
 func (ScreenRepository *ScreenRepository) GetScreenById(begin *mongo.Client, id string) (result *pb.Screen, err error) {
 	var foundScreen model.Screen
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -66,7 +66,7 @@ func (ScreenRepository *ScreenRepository) GetScreenById(begin *mongo.Client, id 
 	return result, err
 }
 func (ScreenRepository *ScreenRepository) PatchOneById(begin *mongo.Client, id string, toPatchScreen *pb.Screen) (result *pb.Screen, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -95,7 +95,7 @@ func (ScreenRepository *ScreenRepository) PatchOneById(begin *mongo.Client, id s
 }
 
 func (ScreenRepository *ScreenRepository) DeleteScreen(begin *mongo.Client, id string) (result *pb.Screen, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	var foundScreen model.Screen
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -125,7 +125,7 @@ func (ScreenRepository *ScreenRepository) DeleteScreen(begin *mongo.Client, id s
 }
 
 func (ScreenRepository *ScreenRepository) ListScreens(begin *mongo.Client) (result *pb.ScreenResponseRepeated, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	findOptions := options.Find()
 	cursor, cursorErr := db.Collection("screens").Find(context.TODO(), bson.D{{}}, findOptions)
 	if cursorErr != nil {
