@@ -22,7 +22,7 @@ func NewAccountRepository() *AccountRepository {
 }
 
 func (AccountRepository *AccountRepository) CreateAccount(begin *mongo.Client, toCreateAccount *pb.Account) (result *pb.Account, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	createAcc := bson.D{
 		{Key: "account_name", Value: toCreateAccount.AccountName},
 		{Key: "password", Value: toCreateAccount.Password},
@@ -43,7 +43,7 @@ func (AccountRepository *AccountRepository) CreateAccount(begin *mongo.Client, t
 
 func (AccountRepository *AccountRepository) GetAccountById(begin *mongo.Client, id string) (result *pb.Account, err error) {
 	var foundAccount model.Account
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -66,7 +66,7 @@ func (AccountRepository *AccountRepository) GetAccountById(begin *mongo.Client, 
 	return result, err
 }
 func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id string, toPatchAccount *pb.Account) (result *pb.Account, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -95,7 +95,7 @@ func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id
 }
 
 func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, id string) (result *pb.Account, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	var foundAccount model.Account
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -125,7 +125,7 @@ func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, i
 }
 
 func (AccountRepository *AccountRepository) ListAccount(begin *mongo.Client) (result *pb.AccountResponseRepeated, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	findOptions := options.Find()
 	cursor, cursorErr := db.Collection("accounts").Find(context.TODO(), bson.D{{}}, findOptions)
 	if cursorErr != nil {

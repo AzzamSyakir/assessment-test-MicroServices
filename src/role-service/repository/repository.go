@@ -22,7 +22,7 @@ func NewRoleRepository() *RoleRepository {
 }
 
 func (RoleRepository *RoleRepository) CreateRole(begin *mongo.Client, toCreateRole *pb.Role) (result *pb.Role, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	createAcc := bson.D{
 		{Key: "role_name", Value: toCreateRole.RoleName},
 		{Key: "role_code", Value: toCreateRole.RoleCode},
@@ -43,7 +43,7 @@ func (RoleRepository *RoleRepository) CreateRole(begin *mongo.Client, toCreateRo
 
 func (RoleRepository *RoleRepository) GetRoleById(begin *mongo.Client, id string) (result *pb.Role, err error) {
 	var foundRole model.Role
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -66,7 +66,7 @@ func (RoleRepository *RoleRepository) GetRoleById(begin *mongo.Client, id string
 	return result, err
 }
 func (RoleRepository *RoleRepository) PatchOneById(begin *mongo.Client, id string, toPatchRole *pb.Role) (result *pb.Role, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -95,7 +95,7 @@ func (RoleRepository *RoleRepository) PatchOneById(begin *mongo.Client, id strin
 }
 
 func (RoleRepository *RoleRepository) DeleteRole(begin *mongo.Client, id string) (result *pb.Role, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	var foundRole model.Role
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -125,7 +125,7 @@ func (RoleRepository *RoleRepository) DeleteRole(begin *mongo.Client, id string)
 }
 
 func (RoleRepository *RoleRepository) ListRoles(begin *mongo.Client) (result *pb.RoleResponseRepeated, err error) {
-	db := begin.Database("db")
+	db := begin.Database("appDb")
 	findOptions := options.Find()
 	cursor, cursorErr := db.Collection("roles").Find(context.TODO(), bson.D{{}}, findOptions)
 	if cursorErr != nil {
