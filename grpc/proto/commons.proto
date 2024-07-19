@@ -5,4 +5,7 @@ option go_package = "pb/";
 message ById {
   string id = 1;
 }
+message ByName {
+  string name = 1;
+}
 message empty {}
