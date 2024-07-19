@@ -2,7 +2,7 @@ package repository
 
 import (
 	"assesement-test-MicroServices/grpc/pb"
-	"assesement-test-MicroServices/src/gateway-service/entity"
+	"assesement-test-MicroServices/src/auth-service/entity"
 	"context"
 
 	"github.com/guregu/null"

@@ -1,6 +1,6 @@
 # services command
 start-gateway:
-	clear && go run src/gateway-service/cmd/web/main.go
+	clear && go run src/auth-service/cmd/web/main.go
 
 start-role:
 	clear && go run src/role-service/cmd/web/main.go
