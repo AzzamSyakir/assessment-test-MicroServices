@@ -41,8 +41,7 @@ func NewAuthRoute(router *mux.Router, AuthController *http.AuthController) *Auth
 }
 
 func (authRoute *AuthRoute) Register() {
-	authRoute.Router.HandleFunc("/register", authRoute.AuthController.Register).Methods("POST")
-
+	authRoute.Router.HandleFunc("/register", authRoute.AuthController.CreateAccount).Methods("POST")
 	authRoute.Router.HandleFunc("/login", authRoute.AuthController.Login).Methods("POST")
 	authRoute.Router.HandleFunc("/access-token", authRoute.AuthController.GetNewAccessToken).Methods("POST")
 	authRoute.Router.HandleFunc("/logout", authRoute.AuthController.Logout).Methods("POST")

@@ -4,6 +4,17 @@ import (
 	"github.com/guregu/null"
 )
 
+type Session struct {
+	Id                    null.String `json:"id"`
+	AccountId             null.String `json:"account_id"`
+	AccessToken           null.String `json:"access_token"`
+	RefreshToken          null.String `json:"refresh_token"`
+	AccessTokenExpiredAt  null.Time   `json:"access_token_expired_at"`
+	RefreshTokenExpiredAt null.Time   `json:"refresh_token_expired_at"`
+	CreatedAt             null.Time   `json:"created_at"`
+	UpdatedAt             null.Time   `json:"updated_at"`
+}
+
 type Account struct {
 	AccountName null.String `bson:"auth_name"`
 	Password    null.String `bson:"password"`

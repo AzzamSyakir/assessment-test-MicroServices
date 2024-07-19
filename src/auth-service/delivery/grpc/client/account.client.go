@@ -27,12 +27,24 @@ func InitAccountServiceClient(url string) AccountServiceClient {
 
 	return c
 }
-func (c *AccountServiceClient) GetAccountById(productId string) (*pb.AccountResponse, error) {
+func (c *AccountServiceClient) GetAccountById(id string) (*pb.AccountResponse, error) {
 	req := &pb.ById{
-		Id: productId,
+		Id: id,
 	}
 
 	resp, err := c.Client.GetAccountById(context.Background(), req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get account by id: %w", err)
+	}
+
+	return resp, nil
+}
+func (c *AccountServiceClient) GetOneByAccountName(accountName string) (*pb.AccountResponse, error) {
+	req := &pb.ByName{
+		Name: accountName,
+	}
+
+	resp, err := c.Client.GetOneByAccountName(context.Background(), req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get account by id: %w", err)
 	}

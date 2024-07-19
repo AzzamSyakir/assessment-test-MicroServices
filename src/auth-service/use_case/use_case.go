@@ -4,9 +4,10 @@ import (
 	"assesement-test-MicroServices/src/auth-service/config"
 	"assesement-test-MicroServices/src/auth-service/delivery/grpc/client"
 	"assesement-test-MicroServices/src/auth-service/entity"
-	model_request "assesement-test-MicroServices/src/auth-service/model/request/controller"
+	model_request "assesement-test-MicroServices/src/auth-service/model/request"
 	model_response "assesement-test-MicroServices/src/auth-service/model/response"
 	"assesement-test-MicroServices/src/auth-service/repository"
+	"context"
 	"net/http"
 	"time"
 
@@ -19,7 +20,7 @@ type AuthUseCase struct {
 	DatabaseConfig *config.DatabaseConfig
 	AuthRepository *repository.AuthRepository
 	Env            *config.EnvConfig
-	accountClient     *client.AccountServiceClient
+	accountClient  *client.AccountServiceClient
 }
 
 func NewAuthUseCase(
@@ -29,7 +30,7 @@ func NewAuthUseCase(
 	initAccountClient *client.AccountServiceClient,
 ) *AuthUseCase {
 	authUseCase := &AuthUseCase{
-		accountClient:     initAccountClient,
+		accountClient:  initAccountClient,
 		DatabaseConfig: databaseConfig,
 		AuthRepository: authRepository,
 		Env:            env,
@@ -38,20 +39,27 @@ func NewAuthUseCase(
 }
 
 func (authUseCase *AuthUseCase) Login(request *model_request.LoginRequest) (result *model_response.Response[*entity.Session], err error) {
-	begin, err := authUseCase.DatabaseConfig.AuthDB.Connection.Begin()
+	session, err := authUseCase.DatabaseConfig.AuthDB.Connection.StartSession()
 	if err != nil {
-		rollback := begin.Rollback()
 		result = &model_response.Response[*entity.Session]{
-			Code:    http.StatusInternalServerError,
-			Message: "AuthUseCase Login failed, begin fail, " + err.Error(),
+			Code:    http.StatusBadRequest,
+			Message: "AuthUseCase Login is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
-		return result, rollback
+		return result, session.AbortTransaction(context.Background())
 	}
-
-	foundAccount, err := authUseCase.accountClient.GetAccountByEmail(request.Email.String)
+	err = session.StartTransaction()
 	if err != nil {
-		rollback := begin.Rollback()
+		result = &model_response.Response[*entity.Session]{
+			Code:    http.StatusBadRequest,
+			Message: "AuthUseCase Login is failed, StartTransaction fail," + err.Error(),
+			Data:    nil,
+		}
+		return result, nil
+	}
+	foundAccount, err := authUseCase.accountClient.GetOneByAccountName(request.AccountName.String)
+	if err != nil {
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusBadRequest,
 			Message: foundAccount.Message,
@@ -60,7 +68,7 @@ func (authUseCase *AuthUseCase) Login(request *model_request.LoginRequest) (resu
 		return result, rollback
 	}
 	if foundAccount.Data == nil {
-		rollback := begin.Rollback()
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusBadRequest,
 			Message: foundAccount.Message,
@@ -71,7 +79,7 @@ func (authUseCase *AuthUseCase) Login(request *model_request.LoginRequest) (resu
 
 	comparePasswordErr := bcrypt.CompareHashAndPassword([]byte(foundAccount.Data.Password), []byte(request.Password.String))
 	if comparePasswordErr != nil {
-		rollback := begin.Rollback()
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusNotFound,
 			Message: "AuthUseCase Login is failed, password is not match.",
@@ -86,9 +94,9 @@ func (authUseCase *AuthUseCase) Login(request *model_request.LoginRequest) (resu
 	accessTokenExpiredAt := null.NewTime(currentTime.Time.Add(time.Minute*10), true)
 	refreshTokenExpiredAt := null.NewTime(currentTime.Time.Add(time.Hour*24*2), true)
 
-	foundSession, err := authUseCase.AuthRepository.GetOneByAccountId(begin, foundAccount.Data.Id)
+	foundSession, err := authUseCase.AuthRepository.GetOneByAccountId(authUseCase.DatabaseConfig.AuthDB.Connection, foundAccount.Data.Id)
 	if err != nil {
-		rollback := begin.Rollback()
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusBadRequest,
 			Message: "AuthUseCase Login failed, query to db fail, " + err.Error(),
@@ -104,9 +112,9 @@ func (authUseCase *AuthUseCase) Login(request *model_request.LoginRequest) (resu
 		foundSession.AccessTokenExpiredAt = accessTokenExpiredAt
 		foundSession.RefreshTokenExpiredAt = refreshTokenExpiredAt
 		foundSession.UpdatedAt = currentTime
-		patchedSession, err := authUseCase.AuthRepository.PatchOneById(begin, foundSession.Id.String, foundSession)
+		patchedSession, err := authUseCase.AuthRepository.PatchOneById(authUseCase.DatabaseConfig.AuthDB.Connection, foundSession.Id.String, foundSession)
 		if err != nil {
-			rollback := begin.Rollback()
+			rollback := session.AbortTransaction(context.Background())
 			result = &model_response.Response[*entity.Session]{
 				Code:    http.StatusBadRequest,
 				Message: "AuthUseCase Login failed, query updateSession  fail, " + err.Error(),
@@ -115,7 +123,7 @@ func (authUseCase *AuthUseCase) Login(request *model_request.LoginRequest) (resu
 			return result, rollback
 		}
 
-		commit := begin.Commit()
+		commit := session.CommitTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusOK,
 			Message: "AuthUseCase Login is succeed",
@@ -125,8 +133,7 @@ func (authUseCase *AuthUseCase) Login(request *model_request.LoginRequest) (resu
 	}
 
 	newSession := &entity.Session{
-		Id:                    null.NewString(uuid.NewString(), true),
-		AccountId:                null.NewString(foundAccount.Data.Id, true),
+		AccountId:             null.NewString(foundAccount.Data.Id, true),
 		AccessToken:           accessToken,
 		RefreshToken:          refreshToken,
 		AccessTokenExpiredAt:  accessTokenExpiredAt,
@@ -135,9 +142,9 @@ func (authUseCase *AuthUseCase) Login(request *model_request.LoginRequest) (resu
 		UpdatedAt:             currentTime,
 	}
 
-	createdSession, err := authUseCase.AuthRepository.CreateSession(begin, newSession)
+	createdSession, err := authUseCase.AuthRepository.CreateSession(authUseCase.DatabaseConfig.AuthDB.Connection, newSession)
 	if err != nil {
-		rollback := begin.Rollback()
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusBadRequest,
 			Message: "AuthUseCase Login failed, query createSession fail, " + err.Error(),
@@ -145,7 +152,7 @@ func (authUseCase *AuthUseCase) Login(request *model_request.LoginRequest) (resu
 		}
 		return result, rollback
 	}
-	commit := begin.Commit()
+	commit := session.CommitTransaction(context.Background())
 	result = &model_response.Response[*entity.Session]{
 		Code:    http.StatusOK,
 		Message: "AuthUseCase Login is succeed",
@@ -155,20 +162,20 @@ func (authUseCase *AuthUseCase) Login(request *model_request.LoginRequest) (resu
 }
 
 func (authUseCase *AuthUseCase) Logout(accessToken string) (result *model_response.Response[*entity.Session], err error) {
-	begin, err := authUseCase.DatabaseConfig.AuthDB.Connection.Begin()
+	session, err := authUseCase.DatabaseConfig.AuthDB.Connection.StartSession()
 	if err != nil {
-		rollback := begin.Rollback()
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusInternalServerError,
-			Message: "AuthUseCase Logout failed, begin fail, " + err.Error(),
+			Message: "AuthUseCase Logout failed, session fail, " + err.Error(),
 			Data:    nil,
 		}
 		return result, rollback
 	}
 
-	foundSession, err := authUseCase.AuthRepository.FindOneByAccToken(begin, accessToken)
+	foundSession, err := authUseCase.AuthRepository.FindOneByAccToken(authUseCase.DatabaseConfig.AuthDB.Connection, accessToken)
 	if err != nil {
-		rollback := begin.Rollback()
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusBadRequest,
 			Message: "AuthUseCase Logout failed, Invalid token, " + err.Error(),
@@ -177,7 +184,7 @@ func (authUseCase *AuthUseCase) Logout(accessToken string) (result *model_respon
 		return result, rollback
 	}
 	if foundSession == nil {
-		rollback := begin.Rollback()
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusBadRequest,
 			Message: "AuthUseCase Logout is failed, session is not found by access token.",
@@ -185,9 +192,9 @@ func (authUseCase *AuthUseCase) Logout(accessToken string) (result *model_respon
 		}
 		return result, rollback
 	}
-	deletedSession, err := authUseCase.AuthRepository.DeleteOneById(begin, foundSession.Id.String)
+	deletedSession, err := authUseCase.AuthRepository.DeleteOneById(authUseCase.DatabaseConfig.AuthDB.Connection, foundSession.Id.String)
 	if err != nil {
-		rollback := begin.Rollback()
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusBadRequest,
 			Message: "AuthUseCase Logout failed, query to db fail, " + err.Error(),
@@ -196,7 +203,7 @@ func (authUseCase *AuthUseCase) Logout(accessToken string) (result *model_respon
 		return result, rollback
 	}
 	if deletedSession == nil {
-		rollback := begin.Rollback()
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusBadRequest,
 			Message: "AuthUseCase Logout failed, delete session failed",
@@ -205,7 +212,7 @@ func (authUseCase *AuthUseCase) Logout(accessToken string) (result *model_respon
 		return result, rollback
 	}
 
-	commit := begin.Commit()
+	commit := session.CommitTransaction(context.Background())
 	result = &model_response.Response[*entity.Session]{
 		Code:    http.StatusOK,
 		Message: "AuthUseCase Logout is succeed.",
@@ -215,19 +222,19 @@ func (authUseCase *AuthUseCase) Logout(accessToken string) (result *model_respon
 }
 
 func (authUseCase *AuthUseCase) GetNewAccessToken(refreshToken string) (result *model_response.Response[*entity.Session], err error) {
-	begin, err := authUseCase.DatabaseConfig.AuthDB.Connection.Begin()
+	session, err := authUseCase.DatabaseConfig.AuthDB.Connection.StartSession()
 	if err != nil {
-		rollback := begin.Rollback()
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusInternalServerError,
-			Message: "AuthUseCase GetNewAccesToken failed, begin fail, " + err.Error(),
+			Message: "AuthUseCase GetNewAccesToken failed, session fail, " + err.Error(),
 			Data:    nil,
 		}
 		return result, rollback
 	}
-	foundSession, err := authUseCase.AuthRepository.FindOneByRefToken(begin, refreshToken)
+	foundSession, err := authUseCase.AuthRepository.FindOneByRefToken(authUseCase.DatabaseConfig.AuthDB.Connection, refreshToken)
 	if err != nil {
-		rollback := begin.Rollback()
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusBadRequest,
 			Message: "AuthUseCase GetNewAccesToken failed, query to db fail, " + err.Error(),
@@ -237,7 +244,7 @@ func (authUseCase *AuthUseCase) GetNewAccessToken(refreshToken string) (result *
 	}
 
 	if foundSession == nil {
-		rollback := begin.Rollback()
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusBadRequest,
 			Message: "AuthUseCase GetNewAccesToken  failed, session is not found by refresh token.",
@@ -247,7 +254,7 @@ func (authUseCase *AuthUseCase) GetNewAccessToken(refreshToken string) (result *
 	}
 
 	if foundSession.RefreshTokenExpiredAt.Time.Before(time.Now()) {
-		rollback := begin.Rollback()
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusNotFound,
 			Message: "AuthUseCase GetNewAccessToken is failed, refresh token is expired.",
@@ -258,9 +265,9 @@ func (authUseCase *AuthUseCase) GetNewAccessToken(refreshToken string) (result *
 
 	foundSession.AccessToken = null.NewString(uuid.NewString(), true)
 	foundSession.UpdatedAt = null.NewTime(time.Now(), true)
-	patchedSession, err := authUseCase.AuthRepository.PatchOneById(begin, foundSession.Id.String, foundSession)
+	patchedSession, err := authUseCase.AuthRepository.PatchOneById(authUseCase.DatabaseConfig.AuthDB.Connection, foundSession.Id.String, foundSession)
 	if err != nil {
-		rollback := begin.Rollback()
+		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusBadRequest,
 			Message: "AuthUseCase GetNewAccesToken  failed, query to db fail," + err.Error(),
@@ -269,7 +276,7 @@ func (authUseCase *AuthUseCase) GetNewAccessToken(refreshToken string) (result *
 		return result, rollback
 	}
 
-	commit := begin.Commit()
+	commit := session.CommitTransaction(context.Background())
 	result = &model_response.Response[*entity.Session]{
 		Code:    http.StatusOK,
 		Message: "AuthUseCase GetNewAccessToken is succeed.",

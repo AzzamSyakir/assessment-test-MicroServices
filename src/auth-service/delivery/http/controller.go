@@ -1,10 +1,10 @@
 package http
 
 import (
+	model_request "assesement-test-MicroServices/src/auth-service/model/request"
+	"assesement-test-MicroServices/src/auth-service/model/response"
+	"assesement-test-MicroServices/src/auth-service/use_case"
 	"encoding/json"
-	model_request "go-micro-services/src/auth-service/model/request/controller"
-	"go-micro-services/src/auth-service/model/response"
-	"go-micro-services/src/auth-service/use_case"
 	"net/http"
 	"strings"
 )
@@ -21,15 +21,15 @@ func NewAuthController(authUseCase *use_case.AuthUseCase, exposeUseCase *use_cas
 	}
 	return authController
 }
-func (authController *AuthController) Register(writer http.ResponseWriter, reader *http.Request) {
+func (authController *AuthController) CreateAccount(writer http.ResponseWriter, reader *http.Request) {
 
-	request := &model_request.RegisterRequest{}
+	request := &model_request.CreateAccountRequest{}
 	decodeErr := json.NewDecoder(reader.Body).Decode(request)
 	if decodeErr != nil {
 		http.Error(writer, decodeErr.Error(), 404)
 	}
 
-	result := authController.ExposeUseCase.CreateUser(request)
+	result := authController.ExposeUseCase.CreateAccount(request)
 
 	response.NewResponse(writer, result)
 }

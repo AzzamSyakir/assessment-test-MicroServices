@@ -211,6 +211,37 @@ func (exposeUseCase *ExposeUseCase) DetailAccount(id string) (result *model_resp
 	}
 	return bodyResponseAccount
 }
+func (exposeUseCase *ExposeUseCase) GetOneByAccountName(accountName string) (result *model_response.Response[*entity.Account]) {
+	GetAccount, err := exposeUseCase.AccountClient.GetOneByAccountName(accountName)
+	if err != nil {
+		result = &model_response.Response[*entity.Account]{
+			Code:    http.StatusBadRequest,
+			Message: GetAccount.Message,
+			Data:    nil,
+		}
+		return
+	}
+	if GetAccount.Data == nil {
+		result = &model_response.Response[*entity.Account]{
+			Code:    http.StatusBadRequest,
+			Message: GetAccount.Message,
+			Data:    nil,
+		}
+		return
+	}
+	account := entity.Account{
+		AccountName: null.NewString(GetAccount.Data.AccountName, true),
+		Password:    null.NewString(GetAccount.Data.Password, true),
+		CreatedAt:   null.NewTime(GetAccount.Data.CreatedAt.AsTime(), true),
+		UpdatedAt:   null.NewTime(GetAccount.Data.UpdatedAt.AsTime(), true),
+	}
+	bodyResponseAccount := &model_response.Response[*entity.Account]{
+		Code:    http.StatusOK,
+		Message: GetAccount.Message,
+		Data:    &account,
+	}
+	return bodyResponseAccount
+}
 
 // roles
 

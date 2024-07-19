@@ -5,8 +5,8 @@ import (
 )
 
 type LoginRequest struct {
-	Email    null.String `json:"email"`
-	Password null.String `json:"password"`
+	AccountName null.String `json:"account_name"`
+	Password    null.String `json:"password"`
 }
 
 // account req

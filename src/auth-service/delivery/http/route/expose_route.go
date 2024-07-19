@@ -8,133 +8,136 @@ import (
 )
 
 type ExposeRoute struct {
-	Router        *mux.Router
-	UserRoute     *UserRoute
-	ProductRoute  *ProductRoute
-	CategoryRoute *CategoryRoute
-	OrderRoute    *OrderRoute
+	Router       *mux.Router
+	AccountRoute *AccountRoute
+	OfficeRoute  *OfficeRoute
+	ScreenRoute  *ScreenRoute
+	RoleRoute    *RoleRoute
 }
 
 func NewExposeRoute(
 	router *mux.Router,
-	userRoute *UserRoute,
-	productRoute *ProductRoute,
-	categoryRoute *CategoryRoute,
-	orderRoute *OrderRoute,
+	accountRoute *AccountRoute,
+	officeRoute *OfficeRoute,
+	screenRoute *ScreenRoute,
+	roleRoute *RoleRoute,
 
 ) *ExposeRoute {
 	rootRoute := &ExposeRoute{
-		Router:        router,
-		UserRoute:     userRoute,
-		ProductRoute:  productRoute,
-		CategoryRoute: categoryRoute,
-		OrderRoute:    orderRoute,
+		Router:       router,
+		AccountRoute: accountRoute,
+		OfficeRoute:  officeRoute,
+		ScreenRoute:  screenRoute,
+		RoleRoute:    roleRoute,
 	}
 	return rootRoute
 }
 
 func (exposeRoute *ExposeRoute) Register() {
-	exposeRoute.UserRoute.Register()
-	exposeRoute.ProductRoute.Register()
-	exposeRoute.CategoryRoute.Register()
-	exposeRoute.OrderRoute.Register()
+	exposeRoute.AccountRoute.Register()
+	exposeRoute.OfficeRoute.Register()
+	exposeRoute.RoleRoute.Register()
+	exposeRoute.ScreenRoute.Register()
 }
 
-type CategoryRoute struct {
-	Middleware         *middleware.AuthMiddleware
-	Router             *mux.Router
-	CategoryController *http.ExposeController
-}
+// account route
 
-func NewCategoryRoute(router *mux.Router, CategoryController *http.ExposeController, middleware *middleware.AuthMiddleware) *CategoryRoute {
-	CategoryRoute := &CategoryRoute{
-		Router:             router.PathPrefix("/categories").Subrouter(),
-		CategoryController: CategoryController,
-		Middleware:         middleware,
-	}
-	return CategoryRoute
-}
-
-func (categoryRoute *CategoryRoute) Register() {
-	categoryRoute.Router.Use(categoryRoute.Middleware.Middleware)
-	categoryRoute.Router.HandleFunc("", categoryRoute.CategoryController.CreateCategory).Methods("POST")
-	categoryRoute.Router.HandleFunc("", categoryRoute.CategoryController.ListCategories).Methods("GET")
-	categoryRoute.Router.HandleFunc("/{id}", categoryRoute.CategoryController.DetailCategory).Methods("GET")
-	categoryRoute.Router.HandleFunc("/{id}", categoryRoute.CategoryController.DeleteCategory).Methods("DELETE")
-	categoryRoute.Router.HandleFunc("/{id}", categoryRoute.CategoryController.UpdateCategory).Methods("PATCH")
-}
-
-// order route
-
-type OrderRoute struct {
-	Middleware      *middleware.AuthMiddleware
-	Router          *mux.Router
-	OrderController *http.ExposeController
-}
-
-func NewOrderRoute(router *mux.Router, orderController *http.ExposeController, middleware *middleware.AuthMiddleware) *OrderRoute {
-	orderRoute := &OrderRoute{
-		Router:          router.PathPrefix("/orders").Subrouter(),
-		OrderController: orderController,
-		Middleware:      middleware,
-	}
-	return orderRoute
-}
-func (orderRoute *OrderRoute) Register() {
-	orderRoute.Router.Use(orderRoute.Middleware.Middleware)
-	orderRoute.Router.HandleFunc("", orderRoute.OrderController.ListOrders).Methods("GET")
-	orderRoute.Router.HandleFunc("/{id}", orderRoute.OrderController.Detailorder).Methods("GET")
-	orderRoute.Router.HandleFunc("", orderRoute.OrderController.Orders).Methods("POST")
-}
-
-// product route
-
-type ProductRoute struct {
+type AccountRoute struct {
 	Middleware        *middleware.AuthMiddleware
 	Router            *mux.Router
-	ProductController *http.ExposeController
+	AccountController *http.ExposeController
 }
 
-func NewProductRoute(router *mux.Router, productController *http.ExposeController, middleware *middleware.AuthMiddleware) *ProductRoute {
-	productRoute := &ProductRoute{
-		Router:            router.PathPrefix("/products").Subrouter(),
-		ProductController: productController,
+func NewAccountRoute(router *mux.Router, accountController *http.ExposeController, middleware *middleware.AuthMiddleware) *AccountRoute {
+	accountRoute := &AccountRoute{
+		Router:            router.PathPrefix("/accounts").Subrouter(),
+		AccountController: accountController,
 		Middleware:        middleware,
 	}
-	return productRoute
+	return accountRoute
 }
 
-func (productRoute *ProductRoute) Register() {
-	productRoute.Router.Use(productRoute.Middleware.Middleware)
-	productRoute.Router.HandleFunc("", productRoute.ProductController.CreateProduct).Methods("POST")
-	productRoute.Router.HandleFunc("", productRoute.ProductController.ListProducts).Methods("GET")
-	productRoute.Router.HandleFunc("/{id}", productRoute.ProductController.DetailProduct).Methods("GET")
-	productRoute.Router.HandleFunc("/{id}", productRoute.ProductController.DeleteProduct).Methods("DELETE")
-	productRoute.Router.HandleFunc("/{id}", productRoute.ProductController.UpdateProduct).Methods("PATCH")
+func (accountRoute *AccountRoute) Register() {
+	accountRoute.Router.Use(accountRoute.Middleware.Middleware)
+	accountRoute.Router.HandleFunc("/{id}", accountRoute.AccountController.DetailAccount).Methods("GET")
+	accountRoute.Router.HandleFunc("/accountName/{accountName}", accountRoute.AccountController.GetOneByAccountName).Methods("GET")
+	accountRoute.Router.HandleFunc("", accountRoute.AccountController.ListAccount).Methods("GET")
+	accountRoute.Router.HandleFunc("/{id}", accountRoute.AccountController.UpdateAccount).Methods("PATCH")
+	accountRoute.Router.HandleFunc("/{id}", accountRoute.AccountController.DeleteAccount).Methods("DELETE")
 }
 
-// user route
+// office route
 
-type UserRoute struct {
+type OfficeRoute struct {
+	Middleware       *middleware.AuthMiddleware
+	Router           *mux.Router
+	OfficeController *http.ExposeController
+}
+
+func NewOfficeRoute(router *mux.Router, officeController *http.ExposeController, middleware *middleware.AuthMiddleware) *OfficeRoute {
+	officeRoute := &OfficeRoute{
+		Router:           router.PathPrefix("/offices").Subrouter(),
+		OfficeController: officeController,
+		Middleware:       middleware,
+	}
+	return officeRoute
+}
+
+func (officeRoute *OfficeRoute) Register() {
+	officeRoute.Router.Use(officeRoute.Middleware.Middleware)
+	officeRoute.Router.HandleFunc("", officeRoute.OfficeController.CreateOffice).Methods("POST")
+	officeRoute.Router.HandleFunc("", officeRoute.OfficeController.ListOffices).Methods("GET")
+	officeRoute.Router.HandleFunc("/{id}", officeRoute.OfficeController.DetailOffice).Methods("GET")
+	officeRoute.Router.HandleFunc("/{id}", officeRoute.OfficeController.DeleteOffice).Methods("DELETE")
+	officeRoute.Router.HandleFunc("/{id}", officeRoute.OfficeController.UpdateOffice).Methods("PATCH")
+}
+
+// role route
+
+type RoleRoute struct {
 	Middleware     *middleware.AuthMiddleware
 	Router         *mux.Router
-	UserController *http.ExposeController
+	RoleController *http.ExposeController
 }
 
-func NewUserRoute(router *mux.Router, userController *http.ExposeController, middleware *middleware.AuthMiddleware) *UserRoute {
-	userRoute := &UserRoute{
-		Router:         router.PathPrefix("/users").Subrouter(),
-		UserController: userController,
+func NewRoleRoute(router *mux.Router, roleController *http.ExposeController, middleware *middleware.AuthMiddleware) *RoleRoute {
+	roleRoute := &RoleRoute{
+		Router:         router.PathPrefix("/roles").Subrouter(),
+		RoleController: roleController,
 		Middleware:     middleware,
 	}
-	return userRoute
+	return roleRoute
+}
+func (roleRoute *RoleRoute) Register() {
+	roleRoute.Router.Use(roleRoute.Middleware.Middleware)
+	roleRoute.Router.HandleFunc("", roleRoute.RoleController.CreateRole).Methods("POST")
+	roleRoute.Router.HandleFunc("", roleRoute.RoleController.ListRoles).Methods("GET")
+	roleRoute.Router.HandleFunc("/{id}", roleRoute.RoleController.DetailRole).Methods("GET")
+	roleRoute.Router.HandleFunc("/{id}", roleRoute.RoleController.DeleteRole).Methods("DELETE")
+	roleRoute.Router.HandleFunc("/{id}", roleRoute.RoleController.UpdateRole).Methods("PATCH")
 }
 
-func (userRoute *UserRoute) Register() {
-	userRoute.Router.Use(userRoute.Middleware.Middleware)
-	userRoute.Router.HandleFunc("/{id}", userRoute.UserController.DetailUser).Methods("GET")
-	userRoute.Router.HandleFunc("/email/{email}", userRoute.UserController.GetUserByEmail).Methods("GET")
-	userRoute.Router.HandleFunc("", userRoute.UserController.ListUser).Methods("GET")
-	userRoute.Router.HandleFunc("/{id}", userRoute.UserController.UpdateUser).Methods("PATCH")
-	userRoute.Router.HandleFunc("/{id}", userRoute.UserController.DeleteUser).Methods("DELETE")
+// screen route
+type ScreenRoute struct {
+	Middleware       *middleware.AuthMiddleware
+	Router           *mux.Router
+	ScreenController *http.ExposeController
+}
+
+func NewScreenRoute(router *mux.Router, ScreenController *http.ExposeController, middleware *middleware.AuthMiddleware) *ScreenRoute {
+	ScreenRoute := &ScreenRoute{
+		Router:           router.PathPrefix("/screens").Subrouter(),
+		ScreenController: ScreenController,
+		Middleware:       middleware,
+	}
+	return ScreenRoute
+}
+
+func (screenRoute *ScreenRoute) Register() {
+	screenRoute.Router.Use(screenRoute.Middleware.Middleware)
+	screenRoute.Router.HandleFunc("", screenRoute.ScreenController.CreateScreen).Methods("POST")
+	screenRoute.Router.HandleFunc("", screenRoute.ScreenController.ListScreens).Methods("GET")
+	screenRoute.Router.HandleFunc("/{id}", screenRoute.ScreenController.DetailScreen).Methods("GET")
+	screenRoute.Router.HandleFunc("/{id}", screenRoute.ScreenController.DeleteScreen).Methods("DELETE")
+	screenRoute.Router.HandleFunc("/{id}", screenRoute.ScreenController.UpdateScreen).Methods("PATCH")
 }
