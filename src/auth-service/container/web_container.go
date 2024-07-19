@@ -74,10 +74,10 @@ func NewWebContainer() *WebContainer {
 	authMiddleware := middleware.NewAuthMiddleware(*authRepository, authDBConfig)
 	authRoute := route.NewAuthRoute(router, authController)
 	// expose route
-	accountRoute := route.NewUserRoute(router, exposeController, authMiddleware)
-	officeRoute := route.New(router, exposeController, authMiddleware)
-	screenRoute := route.NewCategoryRoute(router, exposeController, authMiddleware)
+	accountRoute := route.NewAccountRoute(router, exposeController, authMiddleware)
+	officeRoute := route.NewOfficeRoute(router, exposeController, authMiddleware)
 	roleRoute := route.NewRoleRoute(router, exposeController, authMiddleware)
+	screenRoute := route.NewScreenRoute(router, exposeController, authMiddleware)
 
 	rootRoute := route.NewRootRoute(
 		router,

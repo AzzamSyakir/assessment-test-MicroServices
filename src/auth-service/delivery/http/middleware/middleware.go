@@ -4,6 +4,7 @@ import (
 	"assesement-test-MicroServices/src/auth-service/config"
 	"assesement-test-MicroServices/src/auth-service/model/response"
 	"assesement-test-MicroServices/src/auth-service/repository"
+	"context"
 	"net/http"
 	"strings"
 	"time"
@@ -36,9 +37,9 @@ func (authMiddleware *AuthMiddleware) Middleware(next http.Handler) http.Handler
 			return
 		}
 
-		begin, err := authMiddleware.DatabaseConfig.AuthDB.Connection.Begin()
+		session, err := authMiddleware.DatabaseConfig.AuthDB.Connection.StartSession()
 		if err != nil {
-			begin.Rollback()
+			session.AbortTransaction(context.Background())
 			result := &response.Response[interface{}]{
 				Code:    http.StatusInternalServerError,
 				Message: "transaction error",
@@ -47,9 +48,9 @@ func (authMiddleware *AuthMiddleware) Middleware(next http.Handler) http.Handler
 			return
 		}
 
-		session, err := authMiddleware.SessionRepository.FindOneByAccToken(begin, token)
+		findSession, err := authMiddleware.SessionRepository.FindOneByAccToken(authMiddleware.DatabaseConfig.AuthDB.Connection, token)
 		if err != nil {
-			begin.Rollback()
+			session.AbortTransaction(context.Background())
 			result := &response.Response[interface{}]{
 				Code:    http.StatusUnauthorized,
 				Message: "Unauthorized: token not found",
@@ -57,8 +58,8 @@ func (authMiddleware *AuthMiddleware) Middleware(next http.Handler) http.Handler
 			response.NewResponse(w, result)
 			return
 		}
-		if session == nil {
-			begin.Rollback()
+		if findSession == nil {
+			session.AbortTransaction(context.Background())
 			result := &response.Response[interface{}]{
 				Code:    http.StatusUnauthorized,
 				Message: "Unauthorized: Invalid Token",
@@ -66,8 +67,8 @@ func (authMiddleware *AuthMiddleware) Middleware(next http.Handler) http.Handler
 			response.NewResponse(w, result)
 			return
 		}
-		if session.AccessTokenExpiredAt == null.NewTime(time.Now(), true) {
-			begin.Rollback()
+		if findSession.AccessTokenExpiredAt == null.NewTime(time.Now(), true) {
+			session.AbortTransaction(context.Background())
 			result := &response.Response[interface{}]{
 				Code:    http.StatusUnauthorized,
 				Message: "Unauthorized: Token expired",
@@ -75,7 +76,7 @@ func (authMiddleware *AuthMiddleware) Middleware(next http.Handler) http.Handler
 			response.NewResponse(w, result)
 			return
 		}
-		begin.Commit()
+		session.CommitTransaction(context.Background())
 		next.ServeHTTP(w, r)
 	})
 }

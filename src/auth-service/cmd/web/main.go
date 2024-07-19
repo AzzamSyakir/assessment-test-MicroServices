@@ -3,28 +3,22 @@ package main
 import (
 	"assesement-test-MicroServices/src/auth-service/container"
 	"fmt"
-	"log"
-	"net"
+	"net/http"
 )
 
 func main() {
-	fmt.Println("Auth-Employee Services started.")
+	fmt.Println("Auth Services started.")
 
 	webContainer := container.NewWebContainer()
 
 	address := fmt.Sprintf(
 		"%s:%s",
-		webContainer.Env.App.Host,
+		"0.0.0.0",
 		webContainer.Env.App.AuthPort,
 	)
-	netListen, err := net.Listen("tcp", address)
-	if err != nil {
-		log.Fatalf("failed to listen %v", err)
+	listenAndServeErr := http.ListenAndServe(address, webContainer.Route.Router)
+	if listenAndServeErr != nil {
+		panic(listenAndServeErr)
 	}
-	fmt.Println("Auth-Employee Services listen", address)
-
-	if err := webContainer.Grpc.Serve(netListen); err != nil {
-		log.Fatalf("failed to serve %v", err.Error())
-	}
-	fmt.Println("Auth-Employee Services finished.")
+	fmt.Println("Auth Services finished.")
 }
