@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	AccountService_GetAccountById_FullMethodName = "/assesement_test_MicroServices.AccountService/GetAccountById"
-	AccountService_UpdateAccount_FullMethodName  = "/assesement_test_MicroServices.AccountService/UpdateAccount"
-	AccountService_CreateAccount_FullMethodName  = "/assesement_test_MicroServices.AccountService/CreateAccount"
-	AccountService_DeleteAccount_FullMethodName  = "/assesement_test_MicroServices.AccountService/DeleteAccount"
-	AccountService_ListAccounts_FullMethodName   = "/assesement_test_MicroServices.AccountService/ListAccounts"
+	AccountService_GetAccountById_FullMethodName          = "/assesement_test_MicroServices.AccountService/GetAccountById"
+	AccountService_GetOneByAccountName_FullMethodName = "/assesement_test_MicroServices.AccountService/GetOneByAccountName"
+	AccountService_UpdateAccount_FullMethodName           = "/assesement_test_MicroServices.AccountService/UpdateAccount"
+	AccountService_CreateAccount_FullMethodName           = "/assesement_test_MicroServices.AccountService/CreateAccount"
+	AccountService_DeleteAccount_FullMethodName           = "/assesement_test_MicroServices.AccountService/DeleteAccount"
+	AccountService_ListAccounts_FullMethodName            = "/assesement_test_MicroServices.AccountService/ListAccounts"
 )
 
 // AccountServiceClient is the client API for AccountService service.
@@ -31,6 +32,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AccountServiceClient interface {
 	GetAccountById(ctx context.Context, in *ById, opts ...grpc.CallOption) (*AccountResponse, error)
+	GetOneByAccountName(ctx context.Context, in *ByName, opts ...grpc.CallOption) (*AccountResponse, error)
 	UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*AccountResponse, error)
 	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*AccountResponse, error)
 	DeleteAccount(ctx context.Context, in *ById, opts ...grpc.CallOption) (*AccountResponse, error)
@@ -49,6 +51,16 @@ func (c *accountServiceClient) GetAccountById(ctx context.Context, in *ById, opt
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AccountResponse)
 	err := c.cc.Invoke(ctx, AccountService_GetAccountById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountServiceClient) GetOneByAccountName(ctx context.Context, in *ByName, opts ...grpc.CallOption) (*AccountResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AccountResponse)
+	err := c.cc.Invoke(ctx, AccountService_GetOneByAccountName_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -100,6 +112,7 @@ func (c *accountServiceClient) ListAccounts(ctx context.Context, in *Empty, opts
 // for forward compatibility
 type AccountServiceServer interface {
 	GetAccountById(context.Context, *ById) (*AccountResponse, error)
+	GetOneByAccountName(context.Context, *ByName) (*AccountResponse, error)
 	UpdateAccount(context.Context, *UpdateAccountRequest) (*AccountResponse, error)
 	CreateAccount(context.Context, *CreateAccountRequest) (*AccountResponse, error)
 	DeleteAccount(context.Context, *ById) (*AccountResponse, error)
@@ -113,6 +126,9 @@ type UnimplementedAccountServiceServer struct {
 
 func (UnimplementedAccountServiceServer) GetAccountById(context.Context, *ById) (*AccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccountById not implemented")
+}
+func (UnimplementedAccountServiceServer) GetOneByAccountName(context.Context, *ByName) (*AccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOneByAccountName not implemented")
 }
 func (UnimplementedAccountServiceServer) UpdateAccount(context.Context, *UpdateAccountRequest) (*AccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateAccount not implemented")
@@ -153,6 +169,24 @@ func _AccountService_GetAccountById_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).GetAccountById(ctx, req.(*ById))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AccountService_GetOneByAccountName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ByName)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).GetOneByAccountName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountService_GetOneByAccountName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).GetOneByAccountName(ctx, req.(*ByName))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -239,6 +273,10 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAccountById",
 			Handler:    _AccountService_GetAccountById_Handler,
+		},
+		{
+			MethodName: "GetOneByAccountName",
+			Handler:    _AccountService_GetOneByAccountName_Handler,
 		},
 		{
 			MethodName: "UpdateAccount",
