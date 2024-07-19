@@ -57,10 +57,10 @@ func (AccountRepository *AccountRepository) GetAccountById(begin *mongo.Client, 
 		return result, err
 	}
 	result = &pb.Account{
-		AccountName: foundAccount.AccountName,
-		Password:    foundAccount.Password,
-		CreatedAt:   foundAccount.CreatedAt,
-		UpdatedAt:   foundAccount.UpdatedAt,
+		AccountName: foundAccount.AccountName.String,
+		Password:    foundAccount.Password.String,
+		CreatedAt:   timestamppb.New(foundAccount.CreatedAt.Time),
+		UpdatedAt:   timestamppb.New(foundAccount.UpdatedAt.Time),
 	}
 	err = nil
 	return result, err
@@ -115,10 +115,10 @@ func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, i
 		return nil, err
 	}
 	result = &pb.Account{
-		AccountName: foundAccount.AccountName,
-		Password:    foundAccount.Password,
-		CreatedAt:   foundAccount.CreatedAt,
-		UpdatedAt:   foundAccount.UpdatedAt,
+		AccountName: foundAccount.AccountName.String,
+		Password:    foundAccount.Password.String,
+		CreatedAt:   timestamppb.New(foundAccount.CreatedAt.Time),
+		UpdatedAt:   timestamppb.New(foundAccount.UpdatedAt.Time),
 	}
 	err = nil
 	return result, err
@@ -139,18 +139,18 @@ func (AccountRepository *AccountRepository) ListAccount(begin *mongo.Client) (re
 	for cursor.Next(context.TODO()) {
 		ListAccount := &entity.Account{}
 		scanErr := cursor.Decode(&ListAccount)
-		ListAccount.CreatedAt = timestamppb.New(createdAt.Time)
-		ListAccount.UpdatedAt = timestamppb.New(updatedAt.Time)
+		ListAccount.CreatedAt = createdAt
+		ListAccount.UpdatedAt = updatedAt
 		if scanErr != nil {
 			result = nil
 			err = scanErr
 			return result, err
 		}
 		ListAccountPb := &pb.Account{
-			AccountName: ListAccount.AccountName,
-			Password:    ListAccount.Password,
-			CreatedAt:   ListAccount.CreatedAt,
-			UpdatedAt:   ListAccount.UpdatedAt,
+			AccountName: ListAccount.AccountName.String,
+			Password:    ListAccount.Password.String,
+			CreatedAt:   timestamppb.New(ListAccount.CreatedAt.Time),
+			UpdatedAt:   timestamppb.New(ListAccount.UpdatedAt.Time),
 		}
 		ListAccountsPb = append(ListAccountsPb, ListAccountPb)
 	}

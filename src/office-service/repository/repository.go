@@ -57,10 +57,10 @@ func (OfficeRepository *OfficeRepository) GetOfficeById(begin *mongo.Client, id 
 		return result, err
 	}
 	result = &pb.Office{
-		BranchName: foundOffice.BranchName,
-		BranchCode: foundOffice.BranchCode,
-		CreatedAt:  foundOffice.CreatedAt,
-		UpdatedAt:  foundOffice.UpdatedAt,
+		BranchName: foundOffice.BranchName.String,
+		BranchCode: foundOffice.BranchCode.String,
+		CreatedAt:  timestamppb.New(foundOffice.CreatedAt.Time),
+		UpdatedAt:  timestamppb.New(foundOffice.UpdatedAt.Time),
 	}
 	err = nil
 	return result, err
@@ -115,10 +115,10 @@ func (OfficeRepository *OfficeRepository) DeleteOffice(begin *mongo.Client, id s
 		return nil, err
 	}
 	result = &pb.Office{
-		BranchName: foundOffice.BranchName,
-		BranchCode: foundOffice.BranchCode,
-		CreatedAt:  foundOffice.CreatedAt,
-		UpdatedAt:  foundOffice.UpdatedAt,
+		BranchName: foundOffice.BranchName.String,
+		BranchCode: foundOffice.BranchCode.String,
+		CreatedAt:  timestamppb.New(foundOffice.CreatedAt.Time),
+		UpdatedAt:  timestamppb.New(foundOffice.UpdatedAt.Time),
 	}
 	err = nil
 	return result, err
@@ -139,18 +139,18 @@ func (OfficeRepository *OfficeRepository) ListOffices(begin *mongo.Client) (resu
 	for cursor.Next(context.TODO()) {
 		ListOffices := &entity.Office{}
 		scanErr := cursor.Decode(&ListOffices)
-		ListOffices.CreatedAt = timestamppb.New(createdAt.Time)
-		ListOffices.UpdatedAt = timestamppb.New(updatedAt.Time)
+		ListOffices.CreatedAt = createdAt
+		ListOffices.UpdatedAt = updatedAt
 		if scanErr != nil {
 			result = nil
 			err = scanErr
 			return result, err
 		}
 		ListOfficesPb := &pb.Office{
-			BranchName: ListOffices.BranchName,
-			BranchCode: ListOffices.BranchCode,
-			CreatedAt:  ListOffices.CreatedAt,
-			UpdatedAt:  ListOffices.UpdatedAt,
+			BranchName: ListOffices.BranchName.String,
+			BranchCode: ListOffices.BranchCode.String,
+			CreatedAt:  timestamppb.New(ListOffices.CreatedAt.Time),
+			UpdatedAt:  timestamppb.New(ListOffices.UpdatedAt.Time),
 		}
 		ListOfficessPb = append(ListOfficessPb, ListOfficesPb)
 	}
