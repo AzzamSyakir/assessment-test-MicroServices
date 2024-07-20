@@ -32,12 +32,14 @@ func NewExposeUseCase(
 	initRoleClient *client.RoleServiceClient,
 	initOfficeClient *client.OfficeServiceClient,
 	initScreenClient *client.ScreenServiceClient,
+	initUserClient *client.UserServiceClient,
 ) *ExposeUseCase {
 	accountUseCase := &ExposeUseCase{
 		AccountClient:  initAccountClient,
 		RoleClient:     initRoleClient,
 		OfficeClient:   initOfficeClient,
 		ScreenClient:   initScreenClient,
+		UserClient:     initUserClient,
 		DatabaseConfig: databaseConfig,
 		AuthRepository: authRepository,
 		Env:            env,
@@ -182,7 +184,7 @@ func (exposeUseCase *ExposeUseCase) UpdateAccount(id string, request *model_requ
 	return bodyResponseAccount
 }
 func (exposeUseCase *ExposeUseCase) DetailAccount(id string) (result *model_response.Response[*entity.Account]) {
-	GetAccount, err := exposeUseCase.AccountClient.GetAccountById(id)
+	GetAccount, err := exposeUseCase.AccountClient.GetOneById(id)
 	if err != nil {
 		result = &model_response.Response[*entity.Account]{
 			Code:    http.StatusBadRequest,

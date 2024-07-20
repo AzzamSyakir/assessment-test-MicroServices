@@ -27,12 +27,12 @@ func InitAccountServiceClient(url string) AccountServiceClient {
 
 	return c
 }
-func (c *AccountServiceClient) GetAccountById(id string) (*pb.AccountResponse, error) {
+func (c *AccountServiceClient) GetOneById(id string) (*pb.AccountResponse, error) {
 	req := &pb.ById{
 		Id: id,
 	}
 
-	resp, err := c.Client.GetAccountById(context.Background(), req)
+	resp, err := c.Client.GetOneById(context.Background(), req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get account by id: %w", err)
 	}

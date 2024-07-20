@@ -2,17 +2,18 @@ package entity
 
 import (
 	"github.com/guregu/null"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Session struct {
-	Id                    null.String `json:"id"`
-	AccountId             null.String `json:"account_id"`
-	AccessToken           null.String `json:"access_token"`
-	RefreshToken          null.String `json:"refresh_token"`
-	AccessTokenExpiredAt  null.Time   `json:"access_token_expired_at"`
-	RefreshTokenExpiredAt null.Time   `json:"refresh_token_expired_at"`
-	CreatedAt             null.Time   `json:"created_at"`
-	UpdatedAt             null.Time   `json:"updated_at"`
+	Id                    string                 `bson:"_id"`
+	AccountId             string                 `bson:"account_id"`
+	AccessToken           string                 `bson:"access_token"`
+	RefreshToken          string                 `bson:"refresh_token"`
+	AccessTokenExpiredAt  *timestamppb.Timestamp `bson:"access_token_expired_at"`
+	RefreshTokenExpiredAt *timestamppb.Timestamp `bson:"refresh_token_expired_at"`
+	CreatedAt             *timestamppb.Timestamp `bson:"created_at"`
+	UpdatedAt             *timestamppb.Timestamp `bson:"updated_at"`
 }
 
 type Account struct {
