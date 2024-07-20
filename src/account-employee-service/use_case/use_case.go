@@ -31,12 +31,12 @@ func NewAccountUseCase(
 	}
 }
 
-func (AccountUseCase *AccountUseCase) GetAccountById(context context.Context, id *pb.ById) (result *pb.AccountResponse, err error) {
+func (AccountUseCase *AccountUseCase) GetOneById(context context.Context, id *pb.ById) (result *pb.AccountResponse, err error) {
 	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
 	if err != nil {
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase GetAccountById is failed, startSession fail," + err.Error(),
+			Message: "AccountUseCase GetOneById is failed, startSession fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, session.AbortTransaction(context)
@@ -45,15 +45,15 @@ func (AccountUseCase *AccountUseCase) GetAccountById(context context.Context, id
 	if err != nil {
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Internal),
-			Message: "AccountUseCase GetAccountById is failed, StartTransaction fail," + err.Error(),
+			Message: "AccountUseCase GetOneById is failed, StartTransaction fail," + err.Error(),
 			Data:    nil,
 		}
 		return result, nil
 	}
-	GetAccountById, GetAccountByIdErr := AccountUseCase.AccountRepository.GetAccountById(AccountUseCase.DatabaseConfig.AccountDB.Connection, id.Id)
-	if GetAccountByIdErr != nil {
+	GetOneById, GetOneByIdErr := AccountUseCase.AccountRepository.GetOneById(AccountUseCase.DatabaseConfig.AccountDB.Connection, id.Id)
+	if GetOneByIdErr != nil {
 		rollback := session.AbortTransaction(context)
-		errorMessage := fmt.Sprintf("AccountUseCase GetAccountById is failed, GetAccountById failed : %s", GetAccountByIdErr)
+		errorMessage := fmt.Sprintf("AccountUseCase GetOneById is failed, GetOneById failed : %s", GetOneByIdErr)
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Canceled),
 			Message: errorMessage,
@@ -61,7 +61,7 @@ func (AccountUseCase *AccountUseCase) GetAccountById(context context.Context, id
 		}
 		return result, rollback
 	}
-	if GetAccountById == nil {
+	if GetOneById == nil {
 		rollback := session.AbortTransaction(context)
 		errorMessage := fmt.Sprintf("Account UseCase GetOneById is failed, Account is not found by id %s", id)
 		result = &pb.AccountResponse{
@@ -75,11 +75,58 @@ func (AccountUseCase *AccountUseCase) GetAccountById(context context.Context, id
 	result = &pb.AccountResponse{
 		Code:    int64(codes.OK),
 		Message: "Account UseCase GetOneById is succeed.",
-		Data:    GetAccountById,
+		Data:    GetOneById,
 	}
 	return result, commit
 }
-
+func (AccountUseCase *AccountUseCase) GetOneByAccountName(context context.Context, name *pb.ByName) (result *pb.AccountResponse, err error) {
+	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
+	if err != nil {
+		result = &pb.AccountResponse{
+			Code:    int64(codes.Internal),
+			Message: "AccountUseCase GetOneByAccountName is failed, startSession fail," + err.Error(),
+			Data:    nil,
+		}
+		return result, session.AbortTransaction(context)
+	}
+	err = session.StartTransaction()
+	if err != nil {
+		result = &pb.AccountResponse{
+			Code:    int64(codes.Internal),
+			Message: "AccountUseCase GetOneByAccountName is failed, StartTransaction fail," + err.Error(),
+			Data:    nil,
+		}
+		return result, nil
+	}
+	getOneByAccountName, getAccountByIdErr := AccountUseCase.AccountRepository.GetOneByAccountName(AccountUseCase.DatabaseConfig.AccountDB.Connection, name.Name)
+	if getAccountByIdErr != nil {
+		rollback := session.AbortTransaction(context)
+		errorMessage := fmt.Sprintf("AccountUseCase GetOneByAccountName is failed, GetOneByAccountName failed : %s", getAccountByIdErr)
+		result = &pb.AccountResponse{
+			Code:    int64(codes.Canceled),
+			Message: errorMessage,
+			Data:    nil,
+		}
+		return result, rollback
+	}
+	if getOneByAccountName == nil {
+		rollback := session.AbortTransaction(context)
+		errorMessage := fmt.Sprintf("AccountUseCase GetOneByAccountName is failed, Account is not found by name %s", name)
+		result = &pb.AccountResponse{
+			Code:    int64(codes.Canceled),
+			Message: errorMessage,
+			Data:    nil,
+		}
+		return result, rollback
+	}
+	commit := session.CommitTransaction(context)
+	result = &pb.AccountResponse{
+		Code:    int64(codes.OK),
+		Message: "Account UseCase GetOneByAccountName is succeed.",
+		Data:    getOneByAccountName,
+	}
+	return result, commit
+}
 func (AccountUseCase *AccountUseCase) UpdateAccount(context context.Context, request *pb.UpdateAccountRequest) (result *pb.AccountResponse, err error) {
 	begin := AccountUseCase.DatabaseConfig.AccountDB.Connection
 	session, err := AccountUseCase.DatabaseConfig.AccountDB.Connection.StartSession()
@@ -101,7 +148,7 @@ func (AccountUseCase *AccountUseCase) UpdateAccount(context context.Context, req
 		return result, nil
 	}
 
-	foundAccount, err := AccountUseCase.AccountRepository.GetAccountById(begin, request.Id)
+	foundAccount, err := AccountUseCase.AccountRepository.GetOneById(begin, request.Id)
 	if err != nil {
 		result = &pb.AccountResponse{
 			Code:    int64(codes.Canceled),

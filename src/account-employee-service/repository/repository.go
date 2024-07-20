@@ -2,10 +2,8 @@ package repository
 
 import (
 	"assesement-test-MicroServices/grpc/pb"
-	"assesement-test-MicroServices/src/auth-service/entity"
 	"context"
 
-	"github.com/guregu/null"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,6 +17,14 @@ type AccountRepository struct {
 func NewAccountRepository() *AccountRepository {
 	AccountRepository := &AccountRepository{}
 	return AccountRepository
+}
+
+type MongoDataAccount struct {
+	Id          string                `bson:"_id,omitempty"`
+	AccountName string                `bson:"account_name"`
+	Password    string                `bson:"password"`
+	CreatedAt   timestamppb.Timestamp `bson:"created_at"`
+	UpdatedAt   timestamppb.Timestamp `bson:"updated_at"`
 }
 
 func (AccountRepository *AccountRepository) CreateAccount(begin *mongo.Client, toCreateAccount *pb.Account) (result *pb.Account, err error) {
@@ -41,8 +47,8 @@ func (AccountRepository *AccountRepository) CreateAccount(begin *mongo.Client, t
 	return result, err
 }
 
-func (AccountRepository *AccountRepository) GetAccountById(begin *mongo.Client, id string) (result *pb.Account, err error) {
-	var foundAccount entity.Account
+func (AccountRepository *AccountRepository) GetOneById(begin *mongo.Client, id string) (result *pb.Account, err error) {
+	var foundAccount MongoDataAccount
 	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -56,14 +62,35 @@ func (AccountRepository *AccountRepository) GetAccountById(begin *mongo.Client, 
 		err = queryErr
 		return result, err
 	}
-	result = &pb.Account{
-		AccountName: foundAccount.AccountName.String,
-		Password:    foundAccount.Password.String,
-		CreatedAt:   timestamppb.New(foundAccount.CreatedAt.Time),
-		UpdatedAt:   timestamppb.New(foundAccount.UpdatedAt.Time),
+	accountPb := &pb.Account{
+		Id:          foundAccount.Id,
+		AccountName: foundAccount.AccountName,
+		Password:    foundAccount.Password,
+		CreatedAt:   &foundAccount.CreatedAt,
+		UpdatedAt:   &foundAccount.UpdatedAt,
+	}
+
+	err = nil
+	return accountPb, err
+}
+func (AccountRepository *AccountRepository) GetOneByAccountName(begin *mongo.Client, name string) (result *pb.Account, err error) {
+	var foundAccount MongoDataAccount
+	db := begin.Database("appDb")
+	queryErr := db.Collection("accounts").FindOne(context.Background(), bson.D{{Key: "account_name", Value: name}}).Decode(&foundAccount)
+	if queryErr != nil {
+		result = nil
+		err = queryErr
+		return result, err
+	}
+	accountPb := &pb.Account{
+		Id:          foundAccount.Id,
+		AccountName: foundAccount.AccountName,
+		Password:    foundAccount.Password,
+		CreatedAt:   &foundAccount.CreatedAt,
+		UpdatedAt:   &foundAccount.UpdatedAt,
 	}
 	err = nil
-	return result, err
+	return accountPb, err
 }
 func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id string, toPatchAccount *pb.Account) (result *pb.Account, err error) {
 	db := begin.Database("appDb")
@@ -96,7 +123,7 @@ func (AccountRepository *AccountRepository) PatchOneById(begin *mongo.Client, id
 
 func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, id string) (result *pb.Account, err error) {
 	db := begin.Database("appDb")
-	var foundAccount entity.Account
+	var foundAccount *pb.Account
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -114,17 +141,12 @@ func (AccountRepository *AccountRepository) DeleteAccount(begin *mongo.Client, i
 	if deleteError != nil {
 		return nil, err
 	}
-	result = &pb.Account{
-		AccountName: foundAccount.AccountName.String,
-		Password:    foundAccount.Password.String,
-		CreatedAt:   timestamppb.New(foundAccount.CreatedAt.Time),
-		UpdatedAt:   timestamppb.New(foundAccount.UpdatedAt.Time),
-	}
 	err = nil
 	return result, err
 }
 
 func (AccountRepository *AccountRepository) ListAccount(begin *mongo.Client) (result *pb.AccountResponseRepeated, err error) {
+	var ListAccount []*pb.Account
 	db := begin.Database("appDb")
 	findOptions := options.Find()
 	cursor, cursorErr := db.Collection("accounts").Find(context.TODO(), bson.D{{}}, findOptions)
@@ -133,30 +155,26 @@ func (AccountRepository *AccountRepository) ListAccount(begin *mongo.Client) (re
 		err = cursorErr
 		return result, err
 	}
-	var ListAccountsPb []*pb.Account
-	var createdAt, updatedAt null.Time
-
 	for cursor.Next(context.TODO()) {
-		ListAccount := &entity.Account{}
-		scanErr := cursor.Decode(&ListAccount)
-		ListAccount.CreatedAt = createdAt
-		ListAccount.UpdatedAt = updatedAt
+		var account MongoDataAccount
+		scanErr := cursor.Decode(&account)
 		if scanErr != nil {
 			result = nil
 			err = scanErr
 			return result, err
 		}
-		ListAccountPb := &pb.Account{
-			AccountName: ListAccount.AccountName.String,
-			Password:    ListAccount.Password.String,
-			CreatedAt:   timestamppb.New(ListAccount.CreatedAt.Time),
-			UpdatedAt:   timestamppb.New(ListAccount.UpdatedAt.Time),
+		pbAccount := &pb.Account{
+			Id:          account.Id,
+			AccountName: account.AccountName,
+			Password:    account.Password,
+			CreatedAt:   &account.CreatedAt,
+			UpdatedAt:   &account.UpdatedAt,
 		}
-		ListAccountsPb = append(ListAccountsPb, ListAccountPb)
+		ListAccount = append(ListAccount, pbAccount)
 	}
 
 	result = &pb.AccountResponseRepeated{
-		Data: ListAccountsPb,
+		Data: ListAccount,
 	}
 	err = nil
 	return result, err

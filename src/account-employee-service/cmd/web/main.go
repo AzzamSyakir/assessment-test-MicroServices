@@ -14,7 +14,7 @@ func main() {
 
 	address := fmt.Sprintf(
 		"%s:%s",
-		webContainer.Env.App.Host,
+		"0.0.0.0",
 		webContainer.Env.App.Port,
 	)
 	netListen, err := net.Listen("tcp", address)
