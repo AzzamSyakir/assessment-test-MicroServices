@@ -2,10 +2,8 @@ package repository
 
 import (
 	"assesement-test-MicroServices/grpc/pb"
-	"assesement-test-MicroServices/src/auth-service/entity"
 	"context"
 
-	"github.com/guregu/null"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,6 +17,14 @@ type ScreenRepository struct {
 func NewScreenRepository() *ScreenRepository {
 	ScreenRepository := &ScreenRepository{}
 	return ScreenRepository
+}
+
+type MongoDataScreen struct {
+	Id         string                `bson:"_id,omitempty"`
+	ScreenName string                `bson:"screen_name"`
+	ScreenCode string                `bson:"screen_code"`
+	CreatedAt  timestamppb.Timestamp `bson:"created_at"`
+	UpdatedAt  timestamppb.Timestamp `bson:"updated_at"`
 }
 
 func (ScreenRepository *ScreenRepository) CreateScreen(begin *mongo.Client, toCreateScreen *pb.Screen) (result *pb.Screen, err error) {
@@ -42,7 +48,7 @@ func (ScreenRepository *ScreenRepository) CreateScreen(begin *mongo.Client, toCr
 }
 
 func (ScreenRepository *ScreenRepository) GetScreenById(begin *mongo.Client, id string) (result *pb.Screen, err error) {
-	var foundScreen entity.Screen
+	var foundScreen *pb.Screen
 	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -55,12 +61,6 @@ func (ScreenRepository *ScreenRepository) GetScreenById(begin *mongo.Client, id 
 		result = nil
 		err = queryErr
 		return result, err
-	}
-	result = &pb.Screen{
-		ScreenName: foundScreen.ScreenName.String,
-		ScreenCode: foundScreen.ScreenCode.String,
-		CreatedAt:  timestamppb.New(foundScreen.CreatedAt.Time),
-		UpdatedAt:  timestamppb.New(foundScreen.UpdatedAt.Time),
 	}
 	err = nil
 	return result, err
@@ -96,7 +96,7 @@ func (ScreenRepository *ScreenRepository) PatchOneById(begin *mongo.Client, id s
 
 func (ScreenRepository *ScreenRepository) DeleteScreen(begin *mongo.Client, id string) (result *pb.Screen, err error) {
 	db := begin.Database("appDb")
-	var foundScreen entity.Screen
+	var foundScreen *pb.Screen
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -114,12 +114,6 @@ func (ScreenRepository *ScreenRepository) DeleteScreen(begin *mongo.Client, id s
 	if deleteError != nil {
 		return nil, err
 	}
-	result = &pb.Screen{
-		ScreenName: foundScreen.ScreenName.String,
-		ScreenCode: foundScreen.ScreenCode.String,
-		CreatedAt:  timestamppb.New(foundScreen.CreatedAt.Time),
-		UpdatedAt:  timestamppb.New(foundScreen.UpdatedAt.Time),
-	}
 	err = nil
 	return result, err
 }
@@ -133,30 +127,27 @@ func (ScreenRepository *ScreenRepository) ListScreens(begin *mongo.Client) (resu
 		err = cursorErr
 		return result, err
 	}
-	var ListScreenssPb []*pb.Screen
-	var createdAt, updatedAt null.Time
-
+	var listScreens []*pb.Screen
 	for cursor.Next(context.TODO()) {
-		ListScreens := &entity.Screen{}
-		scanErr := cursor.Decode(&ListScreens)
-		ListScreens.CreatedAt = createdAt
-		ListScreens.UpdatedAt = updatedAt
+		var screens MongoDataScreen
+		scanErr := cursor.Decode(&screens)
 		if scanErr != nil {
 			result = nil
 			err = scanErr
 			return result, err
 		}
 		ListScreensPb := &pb.Screen{
-			ScreenName: ListScreens.ScreenName.String,
-			ScreenCode: ListScreens.ScreenCode.String,
-			CreatedAt:  timestamppb.New(ListScreens.CreatedAt.Time),
-			UpdatedAt:  timestamppb.New(ListScreens.UpdatedAt.Time),
+			Id:         screens.Id,
+			ScreenName: screens.ScreenName,
+			ScreenCode: screens.ScreenCode,
+			CreatedAt:  &screens.CreatedAt,
+			UpdatedAt:  &screens.UpdatedAt,
 		}
-		ListScreenssPb = append(ListScreenssPb, ListScreensPb)
+		listScreens = append(listScreens, ListScreensPb)
 	}
 
 	result = &pb.ScreenResponseRepeated{
-		Data: ListScreenssPb,
+		Data: listScreens,
 	}
 	err = nil
 	return result, err

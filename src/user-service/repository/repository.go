@@ -2,10 +2,8 @@ package repository
 
 import (
 	"assesement-test-MicroServices/grpc/pb"
-	"assesement-test-MicroServices/src/auth-service/entity"
 	"context"
 
-	"github.com/guregu/null"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,6 +17,17 @@ type UserRepository struct {
 func NewUserRepository() *UserRepository {
 	UserRepository := &UserRepository{}
 	return UserRepository
+}
+
+type MongoDataUser struct {
+	Id        string                `bson:"_id,omitempty"`
+	UserName  string                `bson:"user_name,omitempty"`
+	PostCode  string                `bson:"post_code"`
+	Province  string                `bson:"province"`
+	Address   string                `bson:"address"`
+	City      string                `bson:"city"`
+	CreatedAt timestamppb.Timestamp `bson:"created_at"`
+	UpdatedAt timestamppb.Timestamp `bson:"updated_at"`
 }
 
 func (UserRepository *UserRepository) CreateUser(begin *mongo.Client, toCreateUser *pb.User) (result *pb.User, err error) {
@@ -45,7 +54,7 @@ func (UserRepository *UserRepository) CreateUser(begin *mongo.Client, toCreateUs
 }
 
 func (UserRepository *UserRepository) GetUserById(begin *mongo.Client, id string) (result *pb.User, err error) {
-	var foundUser entity.User
+	var foundUser pb.User
 	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -58,14 +67,6 @@ func (UserRepository *UserRepository) GetUserById(begin *mongo.Client, id string
 		result = nil
 		err = queryErr
 		return result, err
-	}
-	result = &pb.User{
-		UserName:  foundUser.UserName.String,
-		PostCode:  foundUser.PostCode.String,
-		City:      foundUser.City.String,
-		Province:  foundUser.Province.String,
-		CreatedAt: timestamppb.New(foundUser.CreatedAt.Time),
-		UpdatedAt: timestamppb.New(foundUser.UpdatedAt.Time),
 	}
 	err = nil
 	return result, err
@@ -104,7 +105,7 @@ func (UserRepository *UserRepository) PatchOneById(begin *mongo.Client, id strin
 
 func (UserRepository *UserRepository) DeleteUser(begin *mongo.Client, id string) (result *pb.User, err error) {
 	db := begin.Database("appDb")
-	var foundUser entity.User
+	var foundUser pb.User
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -122,14 +123,6 @@ func (UserRepository *UserRepository) DeleteUser(begin *mongo.Client, id string)
 	if deleteError != nil {
 		return nil, err
 	}
-	result = &pb.User{
-		UserName:  foundUser.UserName.String,
-		PostCode:  foundUser.PostCode.String,
-		City:      foundUser.City.String,
-		Province:  foundUser.Province.String,
-		CreatedAt: timestamppb.New(foundUser.CreatedAt.Time),
-		UpdatedAt: timestamppb.New(foundUser.UpdatedAt.Time),
-	}
 	err = nil
 	return result, err
 }
@@ -144,25 +137,25 @@ func (UserRepository *UserRepository) ListUser(begin *mongo.Client) (result *pb.
 		return result, err
 	}
 	var ListUsersPb []*pb.User
-	var createdAt, updatedAt null.Time
 
 	for cursor.Next(context.TODO()) {
-		ListUser := &entity.User{}
-		scanErr := cursor.Decode(&ListUser)
-		ListUser.CreatedAt = createdAt
-		ListUser.UpdatedAt = updatedAt
+		var user MongoDataUser
+		scanErr := cursor.Decode(&user)
+
 		if scanErr != nil {
 			result = nil
 			err = scanErr
 			return result, err
 		}
 		ListUserPb := &pb.User{
-			UserName:  ListUser.UserName.String,
-			PostCode:  ListUser.PostCode.String,
-			City:      ListUser.City.String,
-			Province:  ListUser.Province.String,
-			CreatedAt: timestamppb.New(ListUser.CreatedAt.Time),
-			UpdatedAt: timestamppb.New(ListUser.UpdatedAt.Time),
+			Id:        user.Id,
+			UserName:  user.UserName,
+			PostCode:  user.PostCode,
+			Address:   user.Address,
+			Province:  user.Province,
+			City:      user.City,
+			CreatedAt: &user.CreatedAt,
+			UpdatedAt: &user.UpdatedAt,
 		}
 		ListUsersPb = append(ListUsersPb, ListUserPb)
 	}
