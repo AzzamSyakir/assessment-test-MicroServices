@@ -19,12 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	AccountService_GetAccountById_FullMethodName          = "/assesement_test_MicroServices.AccountService/GetAccountById"
+	AccountService_GetAccountById_FullMethodName      = "/assesement_test_MicroServices.AccountService/GetAccountById"
 	AccountService_GetOneByAccountName_FullMethodName = "/assesement_test_MicroServices.AccountService/GetOneByAccountName"
-	AccountService_UpdateAccount_FullMethodName           = "/assesement_test_MicroServices.AccountService/UpdateAccount"
-	AccountService_CreateAccount_FullMethodName           = "/assesement_test_MicroServices.AccountService/CreateAccount"
-	AccountService_DeleteAccount_FullMethodName           = "/assesement_test_MicroServices.AccountService/DeleteAccount"
-	AccountService_ListAccounts_FullMethodName            = "/assesement_test_MicroServices.AccountService/ListAccounts"
+	AccountService_UpdateAccount_FullMethodName       = "/assesement_test_MicroServices.AccountService/UpdateAccount"
+	AccountService_CreateAccount_FullMethodName       = "/assesement_test_MicroServices.AccountService/CreateAccount"
+	AccountService_DeleteAccount_FullMethodName       = "/assesement_test_MicroServices.AccountService/DeleteAccount"
+	AccountService_ListAccounts_FullMethodName        = "/assesement_test_MicroServices.AccountService/ListAccounts"
 )
 
 // AccountServiceClient is the client API for AccountService service.

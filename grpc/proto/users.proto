@@ -15,14 +15,14 @@ service UserService{
 }
 
 message User {
-  string id = 1;
-  string username = 2;
-  string address = 3;
-  string postcode = 4;
-  string province = 5;
-  string city = 6;
-  google.protobuf.Timestamp created_at = 7;
-  google.protobuf.Timestamp updated_at = 8;
+  string Id = 1;
+  string UserName = 2;
+  string Address = 3;
+  string PostCode = 4;
+  string Province = 5;
+  string City = 6;
+  google.protobuf.Timestamp CreatedAt = 7;
+  google.protobuf.Timestamp UpdatedAt = 8;
 }
 
 message UserResponse{
@@ -36,9 +36,17 @@ message UserResponseRepeated{
   repeated User data=3;
 }
 message UpdateUserRequest{
-  string id=1;
-  optional string name=2;
+  string id = 1;
+  optional string UserName = 2;
+  optional string Address = 3;
+  optional string PostCode = 4;
+  optional string Province = 5;
+  optional string City = 6;
 }
 message CreateUserRequest{
-  string name=1;
+  string UserName = 1;
+  string Address = 2;
+  string PostCode = 3;
+  string Province = 4;
+  string City = 5;
 }
