@@ -141,3 +141,28 @@ func (screenRoute *ScreenRoute) Register() {
 	screenRoute.Router.HandleFunc("/{id}", screenRoute.ScreenController.DeleteScreen).Methods("DELETE")
 	screenRoute.Router.HandleFunc("/{id}", screenRoute.ScreenController.UpdateScreen).Methods("PATCH")
 }
+
+// user route
+type UserRoute struct {
+	Middleware     *middleware.AuthMiddleware
+	Router         *mux.Router
+	UserController *http.ExposeController
+}
+
+func NewUserRoute(router *mux.Router, UserController *http.ExposeController, middleware *middleware.AuthMiddleware) *UserRoute {
+	UserRoute := &UserRoute{
+		Router:         router.PathPrefix("/screens").Subrouter(),
+		UserController: UserController,
+		Middleware:     middleware,
+	}
+	return UserRoute
+}
+
+func (screenRoute *UserRoute) Register() {
+	screenRoute.Router.Use(screenRoute.Middleware.Middleware)
+	screenRoute.Router.HandleFunc("", screenRoute.UserController.CreateUser).Methods("POST")
+	screenRoute.Router.HandleFunc("", screenRoute.UserController.ListUsers).Methods("GET")
+	screenRoute.Router.HandleFunc("/{id}", screenRoute.UserController.DetailUser).Methods("GET")
+	screenRoute.Router.HandleFunc("/{id}", screenRoute.UserController.DeleteUser).Methods("DELETE")
+	screenRoute.Router.HandleFunc("/{id}", screenRoute.UserController.UpdateUser).Methods("PATCH")
+}

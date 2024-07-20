@@ -24,6 +24,7 @@ type Account struct {
 type User struct {
 	UserName  null.String `bson:"user_name"`
 	PostCode  null.String `bson:"post_code"`
+	Address   null.String `bson:"address"`
 	Province  null.String `bson:"province"`
 	City      null.String `bson:"city"`
 	CreatedAt null.Time   `bson:"created_at"`

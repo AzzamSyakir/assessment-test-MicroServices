@@ -42,3 +42,19 @@ type ScreenPatchOneByIdRequest struct {
 type CreateScreenRequest struct {
 	ScreenName null.String `json:"screen_name"`
 }
+
+// user req
+type UserPatchOneByIdRequest struct {
+	UserName null.String `json:"user_name"`
+	PostCode null.String `json:"post_code"`
+	Address  null.String `json:"address"`
+	Province null.String `json:"province"`
+	City     null.String `json:"city"`
+}
+type CreateUserRequest struct {
+	UserName null.String `json:"user_name"`
+	PostCode null.String `json:"post_code"`
+	Address  null.String `json:"address"`
+	Province null.String `json:"province"`
+	City     null.String `json:"city"`
+}
