@@ -283,5 +283,4 @@ func (authUseCase *AuthUseCase) GetNewAccessToken(refreshToken string) (result *
 		Data:    patchedSession,
 	}
 	return result, commit
-
 }

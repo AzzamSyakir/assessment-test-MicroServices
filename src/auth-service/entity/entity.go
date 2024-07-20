@@ -21,6 +21,14 @@ type Account struct {
 	CreatedAt   null.Time   `bson:"created_at"`
 	UpdatedAt   null.Time   `bson:"updated_at"`
 }
+type User struct {
+	UserName  null.String `bson:"user_name"`
+	PostCode  null.String `bson:"post_code"`
+	Province  null.String `bson:"province"`
+	City      null.String `bson:"city"`
+	CreatedAt null.Time   `bson:"created_at"`
+	UpdatedAt null.Time   `bson:"updated_at"`
+}
 type Office struct {
 	BranchName null.String `bson:"branch_name"`
 	BranchCode null.String `bson:"branch_code"`
