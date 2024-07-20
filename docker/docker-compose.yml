@@ -1,4 +1,85 @@
 services:
+  account-services:
+    container_name: account-employee-services
+    restart: always
+    build:
+      context: ../
+      dockerfile: ./src/account-employee-service/Dockerfile
+    expose:
+      - 8081
+    environment:
+      MONGO_HOST: mongodb
+    ports:
+     - ${ACCOUNT_SERVICES_PORT}:${ACCOUNT_SERVICES_PORT}
+    depends_on:
+      - mongodb
+    volumes:
+      - ../src/account-employee-service/:/app/src/account-employee-service/
+    
+  role-services:
+    container_name: role-services
+    restart: always
+    build:
+      context: ../
+      dockerfile: ./src/role-service/Dockerfile
+    expose:
+      - 8082
+    environment:
+      MONGO_HOST: mongodb
+    ports:
+     - ${ROLE_SERVICES_PORT}:${ROLE_SERVICES_PORT}
+    depends_on:
+      - mongodb
+    volumes:
+      - ../src/role-service/:/app/src/role-service/
+
+  office-services:
+    container_name: office-services
+    restart: always
+    build:
+      context: ../
+      dockerfile: ./src/role-service/Dockerfile
+    expose:
+      - 8083
+    environment:
+      MONGO_HOST: mongodb
+    ports:
+     - ${OFFICE_SERVICES_PORT}:${OFFICE_SERVICES_PORT}
+    depends_on:
+      - mongodb
+    volumes:
+      - ../src/role-service/:/app/src/role-service/
+
+  screen-services:
+    container_name: screen-services
+    restart: always
+    build:
+      context: ../
+      dockerfile: ./src/screen-service/Dockerfile
+    expose:
+      - 8084
+    ports:
+     - ${SCREEN_SERVICES_PORT}:${SCREEN_SERVICES_PORT}
+    depends_on:
+      - mongodb
+    volumes:
+      - ../src/screen-service/:/app/src/screen-service/
+
+  user-services:
+    container_name: user-services
+    restart: always
+    build:
+      context: ../
+      dockerfile: ./src/user-service/Dockerfile
+    expose:
+      - 8085
+    ports:
+     - ${USER_SERVICES_PORT}:${USER_SERVICES_PORT}
+    depends_on:
+      - mongodb
+    volumes:
+      - ../src/user-service/:/app/src/user-service/
+      
   auth-services:
     container_name: auth-services
     restart: always
@@ -6,9 +87,13 @@ services:
       context: ../
       dockerfile: ./src/auth-service/Dockerfile
     environment:
+      MONGO_HOST: mongodb
+      ACCOUNT_HOST: account-services
+      ROLE_HOST: role-services
+      OFFICE_HOST: office-services
+      SCREEN_HOST: screen-services
       USER_HOST: user-services
-      PRODUCT_HOST: product-services
-      ORDER_HOST: order-services
+
     expose:
       - 8080
     ports:

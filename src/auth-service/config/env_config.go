@@ -30,8 +30,8 @@ func NewEnvConfig() *EnvConfig {
 	envConfig := &EnvConfig{
 		App: &AppEnv{
 			Host:        os.Getenv("GATEWAY_APP_HOST"),
-			AuthPort:    os.Getenv("Auth_SERVICES_PORT"),
-			AccountPort: os.Getenv("Account_SERVICES_PORT"),
+			AuthPort:    os.Getenv("AUTH_SERVICES_PORT"),
+			AccountPort: os.Getenv("ACCOUNT_SERVICES_PORT"),
 			RolePort:    os.Getenv("ROLE_SERVICES_PORT"),
 			OfficePort:  os.Getenv("OFFICE_SERVICES_PORT"),
 			ScreenPort:  os.Getenv("SCREEN_SERVICES_PORT"),

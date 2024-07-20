@@ -84,7 +84,7 @@ func (exposeUseCase *ExposeUseCase) CreateAccount(request *model_request.CreateA
 		result = &model_response.Response[*entity.Account]{
 			Code:    http.StatusBadRequest,
 			Data:    nil,
-			Message: createAccount.Message,
+			Message: err.Error(),
 		}
 		return
 	}
