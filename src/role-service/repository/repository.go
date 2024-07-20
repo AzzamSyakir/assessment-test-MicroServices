@@ -2,10 +2,8 @@ package repository
 
 import (
 	"assesement-test-MicroServices/grpc/pb"
-	"assesement-test-MicroServices/src/auth-service/entity"
 	"context"
 
-	"github.com/guregu/null"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,6 +17,14 @@ type RoleRepository struct {
 func NewRoleRepository() *RoleRepository {
 	RoleRepository := &RoleRepository{}
 	return RoleRepository
+}
+
+type MongoDataRole struct {
+	ID        string                `bson:"_id,omitempty"`
+	RoleName  string                `bson:"role_name"`
+	RoleCode  string                `bson:"role_code"`
+	CreatedAt timestamppb.Timestamp `bson:"created_at"`
+	UpdatedAt timestamppb.Timestamp `bson:"updated_at"`
 }
 
 func (RoleRepository *RoleRepository) CreateRole(begin *mongo.Client, toCreateRole *pb.Role) (result *pb.Role, err error) {
@@ -42,7 +48,7 @@ func (RoleRepository *RoleRepository) CreateRole(begin *mongo.Client, toCreateRo
 }
 
 func (RoleRepository *RoleRepository) GetRoleById(begin *mongo.Client, id string) (result *pb.Role, err error) {
-	var foundRole entity.Role
+	var foundRole *pb.Role
 	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -55,12 +61,6 @@ func (RoleRepository *RoleRepository) GetRoleById(begin *mongo.Client, id string
 		result = nil
 		err = queryErr
 		return result, err
-	}
-	result = &pb.Role{
-		RoleName:  foundRole.RoleName.String,
-		RoleCode:  foundRole.RoleCode.String,
-		CreatedAt: timestamppb.New(foundRole.CreatedAt.Time),
-		UpdatedAt: timestamppb.New(foundRole.UpdatedAt.Time),
 	}
 	err = nil
 	return result, err
@@ -96,7 +96,7 @@ func (RoleRepository *RoleRepository) PatchOneById(begin *mongo.Client, id strin
 
 func (RoleRepository *RoleRepository) DeleteRole(begin *mongo.Client, id string) (result *pb.Role, err error) {
 	db := begin.Database("appDb")
-	var foundRole entity.Role
+	var foundRole *pb.Role
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -114,12 +114,6 @@ func (RoleRepository *RoleRepository) DeleteRole(begin *mongo.Client, id string)
 	if deleteError != nil {
 		return nil, err
 	}
-	result = &pb.Role{
-		RoleName:  foundRole.RoleName.String,
-		RoleCode:  foundRole.RoleCode.String,
-		CreatedAt: timestamppb.New(foundRole.CreatedAt.Time),
-		UpdatedAt: timestamppb.New(foundRole.UpdatedAt.Time),
-	}
 	err = nil
 	return result, err
 }
@@ -133,30 +127,27 @@ func (RoleRepository *RoleRepository) ListRoles(begin *mongo.Client) (result *pb
 		err = cursorErr
 		return result, err
 	}
-	var ListRolessPb []*pb.Role
-	var createdAt, updatedAt null.Time
-
+	var listRolesPb []*pb.Role
 	for cursor.Next(context.TODO()) {
-		ListRoles := &entity.Role{}
-		scanErr := cursor.Decode(&ListRoles)
-		ListRoles.CreatedAt = createdAt
-		ListRoles.UpdatedAt = updatedAt
-		if scanErr != nil {
-			result = nil
-			err = scanErr
-			return result, err
+		var role MongoDataRole
+		if err := cursor.Decode(&role); err != nil {
+			return nil, err
 		}
-		ListRolesPb := &pb.Role{
-			RoleName:  ListRoles.RoleName.String,
-			RoleCode:  ListRoles.RoleCode.String,
-			CreatedAt: timestamppb.New(ListRoles.CreatedAt.Time),
-			UpdatedAt: timestamppb.New(ListRoles.UpdatedAt.Time),
+		rolePb := &pb.Role{
+			Id:        role.ID,
+			RoleName:  role.RoleName,
+			RoleCode:  role.RoleCode,
+			CreatedAt: &role.CreatedAt,
+			UpdatedAt: &role.UpdatedAt,
 		}
-		ListRolessPb = append(ListRolessPb, ListRolesPb)
+		listRolesPb = append(listRolesPb, rolePb)
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
 	}
 
 	result = &pb.RoleResponseRepeated{
-		Data: ListRolessPb,
+		Data: listRolesPb,
 	}
 	err = nil
 	return result, err
