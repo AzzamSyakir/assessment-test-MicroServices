@@ -8,7 +8,7 @@ option go_package = "pb/";
 
 
 service AccountService{
-  rpc GetAccountById(ById) returns (AccountResponse);
+  rpc GetOneById(ById) returns (AccountResponse);
   rpc GetOneByAccountName(ByName) returns (AccountResponse);
   rpc UpdateAccount(UpdateAccountRequest) returns (AccountResponse);
   rpc CreateAccount(CreateAccountRequest) returns (AccountResponse);

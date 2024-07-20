@@ -21,6 +21,7 @@ type ExposeUseCase struct {
 	RoleClient     *client.RoleServiceClient
 	OfficeClient   *client.OfficeServiceClient
 	ScreenClient   *client.ScreenServiceClient
+	UserClient     *client.UserServiceClient
 }
 
 func NewExposeUseCase(
@@ -31,12 +32,14 @@ func NewExposeUseCase(
 	initRoleClient *client.RoleServiceClient,
 	initOfficeClient *client.OfficeServiceClient,
 	initScreenClient *client.ScreenServiceClient,
+	initUserClient *client.UserServiceClient,
 ) *ExposeUseCase {
 	accountUseCase := &ExposeUseCase{
 		AccountClient:  initAccountClient,
 		RoleClient:     initRoleClient,
 		OfficeClient:   initOfficeClient,
 		ScreenClient:   initScreenClient,
+		UserClient:     initUserClient,
 		DatabaseConfig: databaseConfig,
 		AuthRepository: authRepository,
 		Env:            env,
@@ -83,7 +86,7 @@ func (exposeUseCase *ExposeUseCase) CreateAccount(request *model_request.CreateA
 		result = &model_response.Response[*entity.Account]{
 			Code:    http.StatusBadRequest,
 			Data:    nil,
-			Message: createAccount.Message,
+			Message: err.Error(),
 		}
 		return
 	}
@@ -181,7 +184,7 @@ func (exposeUseCase *ExposeUseCase) UpdateAccount(id string, request *model_requ
 	return bodyResponseAccount
 }
 func (exposeUseCase *ExposeUseCase) DetailAccount(id string) (result *model_response.Response[*entity.Account]) {
-	GetAccount, err := exposeUseCase.AccountClient.GetAccountById(id)
+	GetAccount, err := exposeUseCase.AccountClient.GetOneById(id)
 	if err != nil {
 		result = &model_response.Response[*entity.Account]{
 			Code:    http.StatusBadRequest,
@@ -245,34 +248,6 @@ func (exposeUseCase *ExposeUseCase) GetOneByAccountName(accountName string) (res
 
 // roles
 
-func (exposeUseCase *ExposeUseCase) ListRoles() (result *model_response.Response[[]*entity.Role]) {
-	ListRole, err := exposeUseCase.RoleClient.ListRoles()
-	if err != nil {
-		result = &model_response.Response[[]*entity.Role]{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-			Data:    nil,
-		}
-		return result
-	}
-	var roles []*entity.Role
-	for _, role := range ListRole.Data {
-		roleData := &entity.Role{
-			RoleName:  null.NewString(role.RoleName, true),
-			RoleCode:  null.NewString(role.RoleCode, true),
-			CreatedAt: null.NewTime(role.CreatedAt.AsTime(), true),
-			UpdatedAt: null.NewTime(role.UpdatedAt.AsTime(), true),
-		}
-
-		roles = append(roles, roleData)
-	}
-	bodyResponseRole := &model_response.Response[[]*entity.Role]{
-		Code:    http.StatusOK,
-		Message: ListRole.Message,
-		Data:    roles,
-	}
-	return bodyResponseRole
-}
 func (exposeUseCase *ExposeUseCase) CreateRole(request *model_request.CreateRoleRequest) (result *model_response.Response[*entity.Role]) {
 	req := &pb.CreateRoleRequest{
 		RoleName: request.RoleName.String,
@@ -304,6 +279,34 @@ func (exposeUseCase *ExposeUseCase) CreateRole(request *model_request.CreateRole
 		Code:    http.StatusCreated,
 		Message: createRole.Message,
 		Data:    &account,
+	}
+	return bodyResponseRole
+}
+func (exposeUseCase *ExposeUseCase) ListRoles() (result *model_response.Response[[]*entity.Role]) {
+	ListRole, err := exposeUseCase.RoleClient.ListRoles()
+	if err != nil {
+		result = &model_response.Response[[]*entity.Role]{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+			Data:    nil,
+		}
+		return result
+	}
+	var roles []*entity.Role
+	for _, role := range ListRole.Data {
+		roleData := &entity.Role{
+			RoleName:  null.NewString(role.RoleName, true),
+			RoleCode:  null.NewString(role.RoleCode, true),
+			CreatedAt: null.NewTime(role.CreatedAt.AsTime(), true),
+			UpdatedAt: null.NewTime(role.UpdatedAt.AsTime(), true),
+		}
+
+		roles = append(roles, roleData)
+	}
+	bodyResponseRole := &model_response.Response[[]*entity.Role]{
+		Code:    http.StatusOK,
+		Message: ListRole.Message,
+		Data:    roles,
 	}
 	return bodyResponseRole
 }
@@ -409,35 +412,6 @@ func (exposeUseCase *ExposeUseCase) DetailRole(id string) (result *model_respons
 }
 
 // offices
-
-func (exposeUseCase *ExposeUseCase) ListOffices() (result *model_response.Response[[]*entity.Office]) {
-	ListOffice, err := exposeUseCase.OfficeClient.ListOffices()
-	if err != nil {
-		result = &model_response.Response[[]*entity.Office]{
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-			Data:    nil,
-		}
-		return result
-	}
-	var roles []*entity.Office
-	for _, role := range ListOffice.Data {
-		roleData := &entity.Office{
-			BranchName: null.NewString(role.BranchName, true),
-			BranchCode: null.NewString(role.BranchCode, true),
-			CreatedAt:  null.NewTime(role.CreatedAt.AsTime(), true),
-			UpdatedAt:  null.NewTime(role.UpdatedAt.AsTime(), true),
-		}
-
-		roles = append(roles, roleData)
-	}
-	bodyResponseOffice := &model_response.Response[[]*entity.Office]{
-		Code:    http.StatusOK,
-		Message: ListOffice.Message,
-		Data:    roles,
-	}
-	return bodyResponseOffice
-}
 func (exposeUseCase *ExposeUseCase) CreateOffice(request *model_request.CreateOfficeRequest) (result *model_response.Response[*entity.Office]) {
 	req := &pb.CreateOfficeRequest{
 		BranchName: request.BranchName.String,
@@ -469,6 +443,34 @@ func (exposeUseCase *ExposeUseCase) CreateOffice(request *model_request.CreateOf
 		Code:    http.StatusCreated,
 		Message: createOffice.Message,
 		Data:    &account,
+	}
+	return bodyResponseOffice
+}
+func (exposeUseCase *ExposeUseCase) ListOffices() (result *model_response.Response[[]*entity.Office]) {
+	ListOffice, err := exposeUseCase.OfficeClient.ListOffices()
+	if err != nil {
+		result = &model_response.Response[[]*entity.Office]{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+			Data:    nil,
+		}
+		return result
+	}
+	var roles []*entity.Office
+	for _, role := range ListOffice.Data {
+		roleData := &entity.Office{
+			BranchName: null.NewString(role.BranchName, true),
+			BranchCode: null.NewString(role.BranchCode, true),
+			CreatedAt:  null.NewTime(role.CreatedAt.AsTime(), true),
+			UpdatedAt:  null.NewTime(role.UpdatedAt.AsTime(), true),
+		}
+
+		roles = append(roles, roleData)
+	}
+	bodyResponseOffice := &model_response.Response[[]*entity.Office]{
+		Code:    http.StatusOK,
+		Message: ListOffice.Message,
+		Data:    roles,
 	}
 	return bodyResponseOffice
 }
@@ -737,4 +739,183 @@ func (exposeUseCase *ExposeUseCase) DetailScreen(id string) (result *model_respo
 		Data:    &role,
 	}
 	return bodyResponseScreen
+}
+
+// user
+func (exposeUseCase *ExposeUseCase) CreateUser(request *model_request.CreateUserRequest) (result *model_response.Response[*entity.User]) {
+	req := &pb.CreateUserRequest{
+		UserName: request.UserName.String,
+	}
+	createUser, err := exposeUseCase.UserClient.CreateUser(req)
+	if err != nil {
+		result = &model_response.Response[*entity.User]{
+			Code:    http.StatusBadRequest,
+			Data:    nil,
+			Message: createUser.Message,
+		}
+		return
+	}
+	if createUser.Data == nil {
+		result = &model_response.Response[*entity.User]{
+			Code:    http.StatusBadRequest,
+			Data:    nil,
+			Message: createUser.Message,
+		}
+		return
+	}
+	account := entity.User{
+		UserName:  null.NewString(createUser.Data.UserName, true),
+		PostCode:  null.NewString(createUser.Data.PostCode, true),
+		Address:   null.NewString(createUser.Data.Address, true),
+		Province:  null.NewString(createUser.Data.Province, true),
+		City:      null.NewString(createUser.Data.City, true),
+		CreatedAt: null.NewTime(createUser.Data.CreatedAt.AsTime(), true),
+		UpdatedAt: null.NewTime(createUser.Data.UpdatedAt.AsTime(), true),
+	}
+	bodyResponseUser := &model_response.Response[*entity.User]{
+		Code:    http.StatusCreated,
+		Message: createUser.Message,
+		Data:    &account,
+	}
+	return bodyResponseUser
+}
+func (exposeUseCase *ExposeUseCase) ListUsers() (result *model_response.Response[[]*entity.User]) {
+	ListUser, err := exposeUseCase.UserClient.ListUsers()
+	if err != nil {
+		result = &model_response.Response[[]*entity.User]{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+			Data:    nil,
+		}
+		return result
+	}
+	var screens []*entity.User
+	for _, screen := range ListUser.Data {
+		screenData := &entity.User{
+			UserName:  null.NewString(screen.UserName, true),
+			PostCode:  null.NewString(screen.PostCode, true),
+			Address:   null.NewString(screen.Address, true),
+			Province:  null.NewString(screen.Province, true),
+			City:      null.NewString(screen.City, true),
+			CreatedAt: null.NewTime(screen.CreatedAt.AsTime(), true),
+			UpdatedAt: null.NewTime(screen.UpdatedAt.AsTime(), true),
+		}
+
+		screens = append(screens, screenData)
+	}
+	bodyResponseUser := &model_response.Response[[]*entity.User]{
+		Code:    http.StatusOK,
+		Message: ListUser.Message,
+		Data:    screens,
+	}
+	return bodyResponseUser
+}
+func (exposeUseCase *ExposeUseCase) DeleteUser(id string) (result *model_response.Response[*entity.User]) {
+	DeleteUser, err := exposeUseCase.UserClient.DeleteUser(id)
+	if err != nil {
+		result = &model_response.Response[*entity.User]{
+			Code:    http.StatusBadRequest,
+			Message: DeleteUser.Message,
+			Data:    nil,
+		}
+		return
+	}
+	if DeleteUser.Data == nil {
+		result = &model_response.Response[*entity.User]{
+			Code:    http.StatusBadRequest,
+			Message: DeleteUser.Message,
+			Data:    nil,
+		}
+		return
+	}
+	screen := entity.User{
+		UserName:  null.NewString(DeleteUser.Data.UserName, true),
+		PostCode:  null.NewString(DeleteUser.Data.PostCode, true),
+		Address:   null.NewString(DeleteUser.Data.Address, true),
+		Province:  null.NewString(DeleteUser.Data.Province, true),
+		City:      null.NewString(DeleteUser.Data.City, true),
+		CreatedAt: null.NewTime(DeleteUser.Data.CreatedAt.AsTime(), true),
+		UpdatedAt: null.NewTime(DeleteUser.Data.UpdatedAt.AsTime(), true),
+	}
+	bodyResponseUser := &model_response.Response[*entity.User]{
+		Code:    http.StatusOK,
+		Message: DeleteUser.Message,
+		Data:    &screen,
+	}
+	return bodyResponseUser
+}
+func (exposeUseCase *ExposeUseCase) UpdateUser(id string, request *model_request.UserPatchOneByIdRequest) (result *model_response.Response[*entity.User]) {
+	req := &pb.UpdateUserRequest{}
+	if id != "" {
+		req.Id = id
+	}
+	if request.UserName.Valid {
+		req.UserName = &request.UserName.String
+	}
+	UpdateUser, err := exposeUseCase.UserClient.UpdateUser(req)
+	if err != nil {
+		result = &model_response.Response[*entity.User]{
+			Code:    http.StatusBadRequest,
+			Message: UpdateUser.Message,
+			Data:    nil,
+		}
+		return
+	}
+	if UpdateUser.Data == nil {
+		result = &model_response.Response[*entity.User]{
+			Code:    http.StatusBadRequest,
+			Message: UpdateUser.Message,
+			Data:    nil,
+		}
+		return
+	}
+	role := entity.User{
+		UserName:  null.NewString(UpdateUser.Data.UserName, true),
+		PostCode:  null.NewString(UpdateUser.Data.PostCode, true),
+		Address:   null.NewString(UpdateUser.Data.Address, true),
+		Province:  null.NewString(UpdateUser.Data.Province, true),
+		City:      null.NewString(UpdateUser.Data.City, true),
+		CreatedAt: null.NewTime(UpdateUser.Data.CreatedAt.AsTime(), true),
+		UpdatedAt: null.NewTime(UpdateUser.Data.UpdatedAt.AsTime(), true),
+	}
+	bodyResponseUser := &model_response.Response[*entity.User]{
+		Code:    http.StatusOK,
+		Message: UpdateUser.Message,
+		Data:    &role,
+	}
+	return bodyResponseUser
+}
+func (exposeUseCase *ExposeUseCase) DetailUser(id string) (result *model_response.Response[*entity.User]) {
+	GetUser, err := exposeUseCase.UserClient.GetUserById(id)
+	if err != nil {
+		result = &model_response.Response[*entity.User]{
+			Code:    http.StatusBadRequest,
+			Message: GetUser.Message,
+			Data:    nil,
+		}
+		return
+	}
+	if GetUser.Data == nil {
+		result = &model_response.Response[*entity.User]{
+			Code:    http.StatusBadRequest,
+			Message: GetUser.Message,
+			Data:    nil,
+		}
+		return
+	}
+	role := entity.User{
+		UserName:  null.NewString(GetUser.Data.UserName, true),
+		PostCode:  null.NewString(GetUser.Data.PostCode, true),
+		Address:   null.NewString(GetUser.Data.Address, true),
+		Province:  null.NewString(GetUser.Data.Province, true),
+		City:      null.NewString(GetUser.Data.City, true),
+		CreatedAt: null.NewTime(GetUser.Data.CreatedAt.AsTime(), true),
+		UpdatedAt: null.NewTime(GetUser.Data.UpdatedAt.AsTime(), true),
+	}
+	bodyResponseUser := &model_response.Response[*entity.User]{
+		Code:    http.StatusOK,
+		Message: GetUser.Message,
+		Data:    &role,
+	}
+	return bodyResponseUser
 }

@@ -2,10 +2,8 @@ package repository
 
 import (
 	"assesement-test-MicroServices/grpc/pb"
-	"assesement-test-MicroServices/src/auth-service/entity"
 	"context"
 
-	"github.com/guregu/null"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,6 +17,14 @@ type OfficeRepository struct {
 func NewOfficeRepository() *OfficeRepository {
 	OfficeRepository := &OfficeRepository{}
 	return OfficeRepository
+}
+
+type MongoDataOffice struct {
+	ID         string                `bson:"_id,omitempty"`
+	BranchName string                `bson:"branch_name"`
+	BranchCode string                `bson:"branch_code"`
+	CreatedAt  timestamppb.Timestamp `bson:"created_at"`
+	UpdatedAt  timestamppb.Timestamp `bson:"updated_at"`
 }
 
 func (OfficeRepository *OfficeRepository) CreateOffice(begin *mongo.Client, toCreateOffice *pb.Office) (result *pb.Office, err error) {
@@ -42,7 +48,7 @@ func (OfficeRepository *OfficeRepository) CreateOffice(begin *mongo.Client, toCr
 }
 
 func (OfficeRepository *OfficeRepository) GetOfficeById(begin *mongo.Client, id string) (result *pb.Office, err error) {
-	var foundOffice entity.Office
+	var foundOffice *pb.Office
 	db := begin.Database("appDb")
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
@@ -56,12 +62,7 @@ func (OfficeRepository *OfficeRepository) GetOfficeById(begin *mongo.Client, id 
 		err = queryErr
 		return result, err
 	}
-	result = &pb.Office{
-		BranchName: foundOffice.BranchName.String,
-		BranchCode: foundOffice.BranchCode.String,
-		CreatedAt:  timestamppb.New(foundOffice.CreatedAt.Time),
-		UpdatedAt:  timestamppb.New(foundOffice.UpdatedAt.Time),
-	}
+
 	err = nil
 	return result, err
 }
@@ -96,7 +97,7 @@ func (OfficeRepository *OfficeRepository) PatchOneById(begin *mongo.Client, id s
 
 func (OfficeRepository *OfficeRepository) DeleteOffice(begin *mongo.Client, id string) (result *pb.Office, err error) {
 	db := begin.Database("appDb")
-	var foundOffice entity.Office
+	var foundOffice *pb.Office
 	objID, objErr := primitive.ObjectIDFromHex(id)
 	if objErr != nil {
 		result = nil
@@ -114,12 +115,6 @@ func (OfficeRepository *OfficeRepository) DeleteOffice(begin *mongo.Client, id s
 	if deleteError != nil {
 		return nil, err
 	}
-	result = &pb.Office{
-		BranchName: foundOffice.BranchName.String,
-		BranchCode: foundOffice.BranchCode.String,
-		CreatedAt:  timestamppb.New(foundOffice.CreatedAt.Time),
-		UpdatedAt:  timestamppb.New(foundOffice.UpdatedAt.Time),
-	}
 	err = nil
 	return result, err
 }
@@ -133,30 +128,28 @@ func (OfficeRepository *OfficeRepository) ListOffices(begin *mongo.Client) (resu
 		err = cursorErr
 		return result, err
 	}
-	var ListOfficessPb []*pb.Office
-	var createdAt, updatedAt null.Time
+	var ListOffices []*pb.Office
 
 	for cursor.Next(context.TODO()) {
-		ListOffices := &entity.Office{}
-		scanErr := cursor.Decode(&ListOffices)
-		ListOffices.CreatedAt = createdAt
-		ListOffices.UpdatedAt = updatedAt
+		var office MongoDataOffice
+		scanErr := cursor.Decode(&office)
 		if scanErr != nil {
 			result = nil
 			err = scanErr
 			return result, err
 		}
-		ListOfficesPb := &pb.Office{
-			BranchName: ListOffices.BranchName.String,
-			BranchCode: ListOffices.BranchCode.String,
-			CreatedAt:  timestamppb.New(ListOffices.CreatedAt.Time),
-			UpdatedAt:  timestamppb.New(ListOffices.UpdatedAt.Time),
+		pbOffice := &pb.Office{
+			Id:         office.ID,
+			BranchName: office.BranchName,
+			BranchCode: office.BranchCode,
+			CreatedAt:  &office.CreatedAt,
+			UpdatedAt:  &office.UpdatedAt,
 		}
-		ListOfficessPb = append(ListOfficessPb, ListOfficesPb)
+		ListOffices = append(ListOffices, pbOffice)
 	}
 
 	result = &pb.OfficeResponseRepeated{
-		Data: ListOfficessPb,
+		Data: ListOffices,
 	}
 	err = nil
 	return result, err

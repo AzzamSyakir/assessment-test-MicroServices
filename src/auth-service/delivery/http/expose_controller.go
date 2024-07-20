@@ -224,3 +224,52 @@ func (exposeController *ExposeController) DeleteScreen(writer http.ResponseWrite
 
 	response.NewResponse(writer, result)
 }
+
+// user
+
+func (exposeController *ExposeController) CreateUser(writer http.ResponseWriter, reader *http.Request) {
+
+	request := &model_request.CreateUserRequest{}
+	decodeErr := json.NewDecoder(reader.Body).Decode(request)
+	if decodeErr != nil {
+		http.Error(writer, "Failed to decode request body: "+decodeErr.Error(), http.StatusBadRequest)
+		return
+	}
+	result := exposeController.ExposeUseCase.CreateUser(request)
+	response.NewResponse(writer, result)
+}
+
+func (exposeController *ExposeController) DetailUser(writer http.ResponseWriter, reader *http.Request) {
+	vars := mux.Vars(reader)
+	id := vars["id"]
+	foundUser := exposeController.ExposeUseCase.DetailUser(id)
+	response.NewResponse(writer, foundUser)
+}
+
+func (exposeController *ExposeController) ListUsers(writer http.ResponseWriter, reader *http.Request) {
+	foundUsers := exposeController.ExposeUseCase.ListUsers()
+	response.NewResponse(writer, foundUsers)
+}
+
+func (exposeController *ExposeController) UpdateUser(writer http.ResponseWriter, reader *http.Request) {
+	vars := mux.Vars(reader)
+	id := vars["id"]
+
+	request := &model_request.UserPatchOneByIdRequest{}
+	decodeErr := json.NewDecoder(reader.Body).Decode(request)
+	if decodeErr != nil {
+		panic(decodeErr)
+	}
+	result := exposeController.ExposeUseCase.UpdateUser(id, request)
+
+	response.NewResponse(writer, result)
+}
+
+func (exposeController *ExposeController) DeleteUser(writer http.ResponseWriter, reader *http.Request) {
+	vars := mux.Vars(reader)
+	id := vars["id"]
+
+	result := exposeController.ExposeUseCase.DeleteUser(id)
+
+	response.NewResponse(writer, result)
+}

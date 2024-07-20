@@ -7,9 +7,8 @@ import (
 	"context"
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/guregu/null"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type AuthMiddleware struct {
@@ -67,7 +66,7 @@ func (authMiddleware *AuthMiddleware) Middleware(next http.Handler) http.Handler
 			response.NewResponse(w, result)
 			return
 		}
-		if findSession.AccessTokenExpiredAt == null.NewTime(time.Now(), true) {
+		if findSession.AccessTokenExpiredAt == timestamppb.Now() {
 			session.AbortTransaction(context.Background())
 			result := &response.Response[interface{}]{
 				Code:    http.StatusUnauthorized,

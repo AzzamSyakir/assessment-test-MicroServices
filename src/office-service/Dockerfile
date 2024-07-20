@@ -4,7 +4,7 @@ FROM golang:1.22-alpine
 #install dependencies
 RUN apk update
 RUN apk add --no-cache git build-base
-RUN go install github.com/cosmtrek/air@latest
+RUN go install github.com/air-verse/air@latest
 
 
 #setup workdir
@@ -16,7 +16,7 @@ WORKDIR $WORKDIR
 # copy source from host to docker container
 COPY ./src/office-service/ ./src/office-service/
 COPY grpc/ grpc/
-COPY Office.air.toml .
+COPY office.air.toml .
 COPY .env .
 COPY go.mod .
 COPY go.sum .
@@ -28,4 +28,4 @@ RUN go mod download
 
 # run the Go app.
 WORKDIR $WORKDIR
-CMD ["air", "-c", "Office.air.toml"]
+CMD ["air", "-c", "office.air.toml"]

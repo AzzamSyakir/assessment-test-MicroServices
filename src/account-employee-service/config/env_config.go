@@ -26,7 +26,7 @@ func NewEnvConfig() *EnvConfig {
 	envConfig := &EnvConfig{
 		App: &AppEnv{
 			Host: os.Getenv("GATEWAY_APP_HOST"),
-			Port: os.Getenv("Account_SERVICES_PORT"),
+			Port: os.Getenv("ACCOUNT_SERVICES_PORT"),
 		},
 		AccountDB: &MongoEnv{
 			Host:     os.Getenv("MONGO_HOST"),

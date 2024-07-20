@@ -37,31 +37,38 @@ func NewWebContainer() *WebContainer {
 
 	accountUrl := fmt.Sprintf(
 		"%s:%s",
-		envConfig.App.Host,
+		envConfig.App.AccountHost,
 		envConfig.App.AccountPort,
 	)
 	roleUrl := fmt.Sprintf(
 		"%s:%s",
-		envConfig.App.Host,
+		envConfig.App.RoleHost,
 		envConfig.App.RolePort,
 	)
 	officeUrl := fmt.Sprintf(
 		"%s:%s",
-		envConfig.App.Host,
+		envConfig.App.OfficeHost,
 		envConfig.App.OfficePort,
 	)
 	screenUrl := fmt.Sprintf(
 		"%s:%s",
-		envConfig.App.Host,
+		envConfig.App.ScreenHost,
 		envConfig.App.ScreenPort,
+	)
+	userUrl := fmt.Sprintf(
+		"%s:%s",
+		envConfig.App.UserHost,
+		envConfig.App.UserPort,
 	)
 
 	initAccountClient := client.InitAccountServiceClient(accountUrl)
 	initRoleClient := client.InitRoleServiceClient(roleUrl)
 	initOfficeClient := client.InitOfficeServiceClient(officeUrl)
 	initScreenClient := client.InitScreenServiceClient(screenUrl)
+	initUserClient := client.InitUserServiceClient(userUrl)
+
 	authUseCase := use_case.NewAuthUseCase(authDBConfig, authRepository, envConfig, &initAccountClient)
-	exposeUseCase := use_case.NewExposeUseCase(authDBConfig, authRepository, envConfig, &initAccountClient, &initRoleClient, &initOfficeClient, &initScreenClient)
+	exposeUseCase := use_case.NewExposeUseCase(authDBConfig, authRepository, envConfig, &initAccountClient, &initRoleClient, &initOfficeClient, &initScreenClient, &initUserClient)
 
 	useCaseContainer := NewUseCaseContainer(authUseCase, exposeUseCase)
 
@@ -102,6 +109,5 @@ func NewWebContainer() *WebContainer {
 		Controller: controllerContainer,
 		Route:      rootRoute,
 	}
-
 	return webContainer
 }

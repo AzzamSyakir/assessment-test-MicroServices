@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/guregu/null"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type AuthUseCase struct {
@@ -62,7 +62,7 @@ func (authUseCase *AuthUseCase) Login(request *model_request.LoginRequest) (resu
 		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusBadRequest,
-			Message: foundAccount.Message,
+			Message: err.Error(),
 			Data:    nil,
 		}
 		return result, rollback
@@ -88,11 +88,10 @@ func (authUseCase *AuthUseCase) Login(request *model_request.LoginRequest) (resu
 		return result, rollback
 	}
 
-	accessToken := null.NewString(uuid.NewString(), true)
-	refreshToken := null.NewString(uuid.NewString(), true)
-	currentTime := null.NewTime(time.Now(), true)
-	accessTokenExpiredAt := null.NewTime(currentTime.Time.Add(time.Minute*10), true)
-	refreshTokenExpiredAt := null.NewTime(currentTime.Time.Add(time.Hour*24*2), true)
+	accessToken := uuid.NewString()
+	refreshToken := uuid.NewString()
+	accessTokenExpiredAt := timestamppb.New(time.Now().Add(time.Minute * 10))
+	refreshTokenExpiredAt := timestamppb.New(time.Now().Add(time.Hour * 24 * 2))
 
 	foundSession, err := authUseCase.AuthRepository.GetOneByAccountId(authUseCase.DatabaseConfig.AuthDB.Connection, foundAccount.Data.Id)
 	if err != nil {
@@ -104,15 +103,13 @@ func (authUseCase *AuthUseCase) Login(request *model_request.LoginRequest) (resu
 		}
 		return result, rollback
 	}
-
 	if foundSession != nil {
-
 		foundSession.AccessToken = accessToken
 		foundSession.RefreshToken = refreshToken
 		foundSession.AccessTokenExpiredAt = accessTokenExpiredAt
 		foundSession.RefreshTokenExpiredAt = refreshTokenExpiredAt
-		foundSession.UpdatedAt = currentTime
-		patchedSession, err := authUseCase.AuthRepository.PatchOneById(authUseCase.DatabaseConfig.AuthDB.Connection, foundSession.Id.String, foundSession)
+		foundSession.UpdatedAt = timestamppb.Now()
+		patchedSession, err := authUseCase.AuthRepository.PatchOneById(authUseCase.DatabaseConfig.AuthDB.Connection, foundSession.Id, foundSession)
 		if err != nil {
 			rollback := session.AbortTransaction(context.Background())
 			result = &model_response.Response[*entity.Session]{
@@ -133,15 +130,14 @@ func (authUseCase *AuthUseCase) Login(request *model_request.LoginRequest) (resu
 	}
 
 	newSession := &entity.Session{
-		AccountId:             null.NewString(foundAccount.Data.Id, true),
+		AccountId:             foundAccount.Data.Id,
 		AccessToken:           accessToken,
 		RefreshToken:          refreshToken,
 		AccessTokenExpiredAt:  accessTokenExpiredAt,
 		RefreshTokenExpiredAt: refreshTokenExpiredAt,
-		CreatedAt:             currentTime,
-		UpdatedAt:             currentTime,
+		CreatedAt:             timestamppb.Now(),
+		UpdatedAt:             timestamppb.Now(),
 	}
-
 	createdSession, err := authUseCase.AuthRepository.CreateSession(authUseCase.DatabaseConfig.AuthDB.Connection, newSession)
 	if err != nil {
 		rollback := session.AbortTransaction(context.Background())
@@ -192,7 +188,7 @@ func (authUseCase *AuthUseCase) Logout(accessToken string) (result *model_respon
 		}
 		return result, rollback
 	}
-	deletedSession, err := authUseCase.AuthRepository.DeleteOneById(authUseCase.DatabaseConfig.AuthDB.Connection, foundSession.Id.String)
+	deletedSession, err := authUseCase.AuthRepository.DeleteOneById(authUseCase.DatabaseConfig.AuthDB.Connection, foundSession.Id)
 	if err != nil {
 		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
@@ -253,7 +249,7 @@ func (authUseCase *AuthUseCase) GetNewAccessToken(refreshToken string) (result *
 		return result, rollback
 	}
 
-	if foundSession.RefreshTokenExpiredAt.Time.Before(time.Now()) {
+	if foundSession.RefreshTokenExpiredAt.AsTime().Before(time.Now()) {
 		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
 			Code:    http.StatusNotFound,
@@ -263,9 +259,9 @@ func (authUseCase *AuthUseCase) GetNewAccessToken(refreshToken string) (result *
 		return result, rollback
 	}
 
-	foundSession.AccessToken = null.NewString(uuid.NewString(), true)
-	foundSession.UpdatedAt = null.NewTime(time.Now(), true)
-	patchedSession, err := authUseCase.AuthRepository.PatchOneById(authUseCase.DatabaseConfig.AuthDB.Connection, foundSession.Id.String, foundSession)
+	foundSession.AccessToken = uuid.NewString()
+	foundSession.UpdatedAt = timestamppb.Now()
+	patchedSession, err := authUseCase.AuthRepository.PatchOneById(authUseCase.DatabaseConfig.AuthDB.Connection, foundSession.Id, foundSession)
 	if err != nil {
 		rollback := session.AbortTransaction(context.Background())
 		result = &model_response.Response[*entity.Session]{
@@ -283,5 +279,4 @@ func (authUseCase *AuthUseCase) GetNewAccessToken(refreshToken string) (result *
 		Data:    patchedSession,
 	}
 	return result, commit
-
 }

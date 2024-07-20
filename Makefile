@@ -1,5 +1,5 @@
 # services command
-start-gateway:
+start-auth:
 	clear && go run src/auth-service/cmd/web/main.go
 
 start-role:
@@ -10,6 +10,9 @@ start-product:
 
 start-order:
 	clear && go run src/order-service/cmd/web/main.go
+	
+start-user:
+	clear && go run src/user-service/cmd/web/main.go
 # docker command
 start-docker:
 	clear && docker compose -f ./docker/docker-compose.yml up -d 

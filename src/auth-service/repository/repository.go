@@ -20,7 +20,7 @@ func NewAuthRepository() *AuthRepository {
 
 func (sessionRepository *AuthRepository) CreateSession(begin *mongo.Client, toCreateSession *entity.Session) (result *entity.Session, err error) {
 	db := begin.Database("appDb")
-	createAcc := bson.D{
+	createSession := bson.D{
 		{Key: "account_id", Value: toCreateSession.AccountId},
 		{Key: "access_token", Value: toCreateSession.AccessToken},
 		{Key: "refresh_token", Value: toCreateSession.RefreshToken},
@@ -29,7 +29,7 @@ func (sessionRepository *AuthRepository) CreateSession(begin *mongo.Client, toCr
 		{Key: "created_at", Value: toCreateSession.CreatedAt},
 		{Key: "updated_at", Value: toCreateSession.UpdatedAt},
 	}
-	_, queryErr := db.Collection("sessions").InsertOne(context.TODO(), createAcc)
+	_, queryErr := db.Collection("sessions").InsertOne(context.TODO(), createSession)
 	if queryErr != nil {
 		result = nil
 		err = queryErr
@@ -58,21 +58,14 @@ func (sessionRepository *AuthRepository) FindOneByAccToken(begin *mongo.Client, 
 func (sessionRepository *AuthRepository) GetOneByAccountId(begin *mongo.Client, accountId string) (result *entity.Session, err error) {
 	var foundSession *entity.Session
 	db := begin.Database("appDb")
-	objID, objErr := primitive.ObjectIDFromHex(accountId)
-	if objErr != nil {
-		result = nil
-		err = objErr
-		return result, err
+	err = db.Collection("sessions").FindOne(context.Background(), bson.D{{Key: "account_id", Value: accountId}}).Decode(&foundSession)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, err
 	}
-	queryErr := db.Collection("sessions").FindOne(context.Background(), bson.D{{Key: "account_id", Value: objID}}).Decode(&foundSession)
-	if queryErr != nil {
-		result = nil
-		err = queryErr
-		return result, err
-	}
-	result = foundSession
-	err = nil
-	return result, err
+	return foundSession, nil
 }
 
 func (sessionRepository *AuthRepository) FindOneByRefToken(begin *mongo.Client, refreshToken string) (result *entity.Session, err error) {
@@ -103,8 +96,8 @@ func (sessionRepository *AuthRepository) PatchOneById(begin *mongo.Client, id st
 			{Key: "account_id", Value: toPatchSession.AccountId},
 			{Key: "access_token", Value: toPatchSession.AccessToken},
 			{Key: "refresh_token", Value: toPatchSession.RefreshToken},
-			{Key: "access_token_expired_at", Value: toPatchSession.RefreshToken},
-			{Key: "refresh_tokenexpired_at", Value: toPatchSession.RefreshToken},
+			{Key: "access_token_expired_at", Value: toPatchSession.AccessTokenExpiredAt},
+			{Key: "refresh_token_expired_at", Value: toPatchSession.RefreshTokenExpiredAt},
 			{Key: "updated_at", Value: toPatchSession.UpdatedAt},
 		},
 		},
